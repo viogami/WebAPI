@@ -39,7 +39,7 @@ func loadImage(path string) (image.Image, error) {
 }
 
 // 生成卡片
-func GenerateCard(text string, cfg P5ccConfig) (image.Image, error) {
+func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 	const (
 		canvasWidth  = 2200
 		canvasHeight = 1672
@@ -66,30 +66,30 @@ func GenerateCard(text string, cfg P5ccConfig) (image.Image, error) {
 	dc.DrawImage(baseCard, baseX, baseY)
 
 	// 加载并绘制 Logo
-	if cfg.ShowLogo {
+	if option.ShowLogo {
 		logo, err := loadImage("p5cc/assets/logo.png")
 		if err != nil {
 			return nil, fmt.Errorf("failed to load logo image: %v", err)
 		}
-		logoWidth := float64(logo.Bounds().Dx()) * cfg.LogoScale
-		logoHeight := float64(logo.Bounds().Dy()) * cfg.LogoScale
-		dc.DrawImageAnchored(logo, canvasWidth-int(logoWidth)-int(cfg.LogoOffset), canvasHeight-int(logoHeight)-int(cfg.LogoOffset), 0, 0)
+		logoWidth := float64(logo.Bounds().Dx()) * option.LogoScale
+		logoHeight := float64(logo.Bounds().Dy()) * option.LogoScale
+		dc.DrawImageAnchored(logo, canvasWidth-int(logoWidth)-int(option.LogoOffset), canvasHeight-int(logoHeight)-int(option.LogoOffset), 0, 0)
 	}
 
 	// 绘制水印文本
-	if cfg.ShowWtm != "" {
+	if option.ShowWtm != "" {
 		dc.SetColor(color.RGBA{255, 255, 255, 165}) // 半透明白色
-		dc.LoadFontFace(cfg.FontFamily, 24)
-		dc.DrawStringAnchored(cfg.ShowWtm, 30, float64(canvasHeight)-30, 0, 0)
+		dc.LoadFontFace(option.FontFamily, 24)
+		dc.DrawStringAnchored(option.ShowWtm, 30, float64(canvasHeight)-30, 0, 0)
 	}
 
 	// 绘制用户文本
 	options := map[string]interface{}{
-		"fontSize":   cfg.FontSize,
-		"fontFamily": cfg.FontFamily,
-		"gutter":     cfg.Gutter,
-		"padding":    cfg.Padding,
-		"textAlign":  cfg.TextAlign,
+		"fontSize":   option.FontSize,
+		"fontFamily": option.FontFamily,
+		"gutter":     option.Gutter,
+		"padding":    option.Padding,
+		"textAlign":  option.TextAlign,
 	}
 	boxText := NewBoxText(text, options)
 	boxText.Draw(dc)
