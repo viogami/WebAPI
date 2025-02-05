@@ -27,6 +27,8 @@ showWtm: ""     # 水印文字，为空则不显示
 
 字体暂时不可更改，默认使用了 `HarmonyOSSansSC-Bold.ttf`
 
+![预览](assets/preview.png)
+
 ## Credits
 
 Persona 5 © ATLUS. © SEGA.
