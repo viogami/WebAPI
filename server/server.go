@@ -17,6 +17,8 @@ type Server struct {
 func NewServer(cfg *Config) *Server {
 	// 初始化 Gin
 	g := gin.Default()
+	// 设置 Gin 的运行模式
+	gin.SetMode(cfg.GinMode)
 
 	// 创建 Server 实例
 	return &Server{
@@ -30,7 +32,7 @@ func (s *Server) RegisterRoutes() {
 	s.router.GET("/", helloHandler)
 	// 注册 /p5cc 路由动态路由
 	s.router.GET("/p5cc/:text", p5ccHandler)
-	s.router.POST("/p5cc", UpdateP5ccHandler)
+	s.router.POST("/p5cc", P5ccPostHandler)
 }
 
 // Run 启动 HTTP 服务

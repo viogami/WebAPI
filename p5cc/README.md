@@ -7,25 +7,25 @@
 `http://api.viogami.tech/p5cc/:text`
 
 eg:
-<http://api.viogami.tech/p5cc/persona5>
+[http://api.viogami.tech/p5cc/persona5](http://api.viogami.tech/p5cc/persona5)
 
 ## 感谢[p5r风格字体的制作者](https://github.com/LzxHahaha)和[预告信样式的制作者](https://github.com/skyventuree)
 
-使用了golang的[gg库](github.com/fogleman/gg)进行绘图。提供了GET方法和POST方法，可用参数如下：
+使用了golang的[gg库](github.com/fogleman/gg)进行绘图。提供了GET方法和POST方法。GET使用动态路由直接生成，POST参数示例如下：
 
 ```yaml
-p5cc:
-  fontSize: 120    # 字体大小
-  gutter : 10      # 字体间距
-  padding : 240     # 文字边距
-  textAlign: center  # 文字对齐方式
-  showLogo: true     # 是否显示Logo
-  logoScale: 1.0     # Logo缩放比例
-  logoOffset: 240     # Logo偏移量
-  showWtm: ""     # 水印文字，为空则不显示
+text: "persona5"
+fontSize: 120    # 字体大小
+gutter : 10      # 字体间距
+padding : 240     # 文字边距
+textAlign: center  # 文字对齐方式
+showLogo: true     # 是否显示Logo
+logoScale: 1.0     # Logo缩放比例
+logoOffset: 240     # Logo偏移量
+showWtm: ""     # 水印文字，为空则不显示
 ```
 
-字体暂时不可更改，默认使用了`HarmonyOSSansSC-Bold.ttf`
+字体暂时不可更改，默认使用了 `HarmonyOSSansSC-Bold.ttf`
 
 ## Credits
 

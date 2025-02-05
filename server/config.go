@@ -10,6 +10,7 @@ import (
 type Config struct {
 	Host       string     `yaml:"Host"`
 	Port       int        `yaml:"Port"`
+	GinMode   string     `yaml:"GinMode"`
 	TextConfig TextConfig `yaml:"TextConfig"`
 	P5cc       P5ccConfig `yaml:"p5cc"`
 }

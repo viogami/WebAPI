@@ -1,5 +1,6 @@
 Host: "localhost"   # 主机地址
 Port: 8080          # 监听端口
+GinMode: debug      # Gin模式
 TextConfig:
   helloText: This is viogami's WebAPI server,you can visit http://viogami.tech to see more details.
 p5cc:
