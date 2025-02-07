@@ -41,6 +41,7 @@ type BoxText struct {
 	Gutter     float64
 	Padding    float64
 	TextAlign  string
+	RedProb    float64
 }
 
 func NewBoxChar(char string, mode int, fontSize float64, fontFamily string) *BoxChar {
@@ -115,6 +116,8 @@ func NewBoxText(text string, options map[string]interface{}) *BoxText {
 			bt.Padding = v.(float64)
 		case "textAlign":
 			bt.TextAlign = v.(string)
+		case "redProb":
+			bt.RedProb = v.(float64)
 		}
 	}
 
@@ -125,7 +128,7 @@ func NewBoxText(text string, options map[string]interface{}) *BoxText {
 
 	// 随机设置红色字符
 	for i := 1; i < len(chars); i++ {
-		if rand.Float32() < 0.33 {
+		if rand.Float32() < float32(bt.RedProb) {
 			modes[i] = CharModeRed
 		} else {
 			modes[i] = CharModeWhite
@@ -146,7 +149,7 @@ func NewBoxText(text string, options map[string]interface{}) *BoxText {
 	return bt
 }
 
-func (bt *BoxText) Draw(dc *gg.Context) float64 {
+func (bt *BoxText) Draw(dc *gg.Context, index int) float64 {
 	padding := bt.Padding
 	gutter := bt.Gutter
 	totalWidth := 2 * padding
@@ -184,8 +187,8 @@ func (bt *BoxText) Draw(dc *gg.Context) float64 {
 
 	// 绘制字符
 	x := startX
-	y := float64(dc.Height())/2
-	maxH := 0.0 // 第一个字符的高度
+	_, firstH := bt.Chars[0].OutterSize() // 第一个字符的高度
+	y := float64(dc.Height())/2 - maxHeight/2 - firstH - float64(index)*(firstH+2*gutter)
 	for _, bc := range bt.Chars {
 		if bc.Mode == CharModeSpace {
 			x += 2 * gutter
@@ -193,15 +196,11 @@ func (bt *BoxText) Draw(dc *gg.Context) float64 {
 		}
 
 		outterW, outterH := bc.OutterSize()
-		if outterH > maxH {
-			maxH = outterH
-			y = y - maxH
-		}
 
 		// 判断是否换行
 		if x+outterW > float64(dc.Width())-padding {
 			x = startX
-			y += maxH + 2*gutter
+			y += firstH + 2*gutter
 		}
 
 		// 绘制白色边框

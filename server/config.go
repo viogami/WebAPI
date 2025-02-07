@@ -25,6 +25,7 @@ type P5ccConfig struct {
 	Gutter     float64 `yaml:"gutter"`
 	Padding    float64 `yaml:"padding"`
 	TextAlign  string  `yaml:"textAlign"`
+	RedProb    float64 `yaml:"redProb"`
 
 	ShowLogo   bool    `yaml:"showLogo"`
 	LogoScale  float64 `yaml:"logoScale"`
