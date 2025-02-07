@@ -1,6 +1,6 @@
 # p5r预告信生成器API
 
-本人将js生成的p5r预告信使用go语言进行了重写和部署，并开放了其api，可以直接通过get方法获取预告信的png。
+本人将js生成的p5r预告信使用go语言进行了重写和部署，并开放了其api，可以直接通过get方法获取预告信的png。网页版的功能基本集成，也提供了换行功能，Text中加入换行符"\n"即可。
 
 > 快速开始
 
@@ -19,6 +19,7 @@ fontSize: 120    # 字体大小
 gutter : 10      # 字体间距
 padding : 240     # 文字边距
 textAlign: center  # 文字对齐方式
+redProb: 0.33 # 红色字体概率
 showLogo: true     # 是否显示Logo
 logoScale: 1.0     # Logo缩放比例
 logoOffset: 240     # Logo偏移量
@@ -33,7 +34,7 @@ showWtm: ""     # 水印文字，为空则不显示
 
 Persona 5 © ATLUS. © SEGA.
 
-This repositories`s cord forks from [p5cc](https://github.com/skyventuree/p5cc)
+Referenced： [p5cc](https://github.com/skyventuree/p5cc)
 
 Assets:
 
