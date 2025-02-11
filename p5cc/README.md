@@ -1,8 +1,14 @@
 # p5r预告信生成器API
 
-本人将js生成的p5r预告信使用go语言进行了重写和部署，并开放了其api，可以直接通过get方法获取预告信的png。网页版的功能基本集成，也提供了换行功能，Text中加入换行符"\n"即可。
+预告信生成器国外作者原版：https://skyventuree.github.io/p5cc/index.html
 
-> 快速开始
+I made the api version for production or entertainment. There's a Chinese version of the web version.But recently the website seems to be hanging.If the response is good, I'll deploy a web version of the public myself.
+I have rewritten and deployed the JS code logic of the web version of the generator in the Go language, and opened its API, which can directly obtain the png of the preview letter through the get method. The GET method can only draw the text in the simplest way, the POST method basically integrates all functions, provides a line break function, etc., and adds the line break character "\n" to the Text.
+
+>我制作了api版本供生产或娱乐使用。网页版有汉化版但最近网站貌似挂了，如果反响好我就自己部署一个网页版公开下。
+本人将网页版生成器的js代码逻辑使用go语言进行了重写和部署，并开放了其api，可以直接通过get方法获取预告信的png。get方法只能最简单的绘制文本，post方法基本集成所有功能，提供了换行功能等，Text中加入换行符"\n"即可。
+
+## Quick Start
 
 `http://api.viogami.tech/p5cc/:text`
 
