@@ -1,6 +1,6 @@
 # p5r预告信生成器API
 
-预告信生成器国外作者原版：https://skyventuree.github.io/p5cc/index.html
+预告信生成器国外作者原版：<https://skyventuree.github.io/p5cc/index.html>
 
 I made the api version for production or entertainment. There's a Chinese version of the web version.But recently the website seems to be hanging.If the response is good, I'll deploy a web version of the public myself.
 I have rewritten and deployed the JS code logic of the web version of the generator in the Go language, and opened its API, which can directly obtain the png of the preview letter through the get method. The GET method can only draw the text in the simplest way, the POST method basically integrates all functions, provides a line break function, etc., and adds the line break character "\n" to the Text.
@@ -24,8 +24,8 @@ text: "persona5"
 fontSize: 120    # 字体大小
 gutter : 10      # 字体间距
 padding : 240     # 文字边距
-textAlign: center  # 文字对齐方式
-redProb: 0.33 # 红色字体概率
+textAlign: center  # 文字对齐方式{center,left}
+redProb: 0.33      # 红色字体概率[0,1]
 showLogo: true     # 是否显示Logo
 logoScale: 1.0     # Logo缩放比例
 logoOffset: 240     # Logo偏移量
