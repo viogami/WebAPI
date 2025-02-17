@@ -7,3 +7,4 @@
 目前搭载功能：
 
 * p5r预告信生成功能api，通过动态路由 `../p5cc/:text` 生成包含该text的p5r风格预告信，一起偷心吧。
+  <br>（发帖宣传在小黑盒：<https://www.xiaoheihe.cn/app/bbs/link/146347423>）
