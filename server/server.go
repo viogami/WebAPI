@@ -30,11 +30,11 @@ func (s *Server) Run() {
 
 // 创建一个 Server 实例
 func NewServer(cfg *conf.Config) *Server {
-	// 初始化 Gin
-	g := gin.Default()
 	// 设置 Gin 的运行模式
 	gin.SetMode(cfg.GinMode)
 
+	g := gin.Default()
+	
 	// 创建 Server 实例
 	return &Server{
 		router: g,
