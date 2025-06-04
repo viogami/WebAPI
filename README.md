@@ -13,5 +13,4 @@
 * 基于golang的gin框架，读取配置文件 `config.yaml`
 * core是核心业务逻辑层
 * 服务层封装了路由和一系列handler，用于监听请求
-* p5cc文件夹由于公开url原因在主目录有备份
 * middleware为中间件，目前只搭载了限流。短时间同一ip频繁请求会被永久封禁。

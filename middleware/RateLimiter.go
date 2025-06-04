@@ -27,11 +27,11 @@ func NewRateLimiter(interval time.Duration) *RateLimiter {
         blacklist:   make(map[string]bool),
         interval:    interval,
         requests:    make(map[string]int),
-        maxRequests: 5, // 设置最大请求次数（可根据需求调整）
+        maxRequests: 5, // 设置最大请求次数
     }
 
-    // 启动一个后台协程定期清理过期记录
-    go rl.cleanupVisitors()
+    // 定期清理过期记录
+    go rl.cleanupVisitors(24 * time.Hour)
 
     return rl
 }
@@ -72,9 +72,9 @@ func (rl *RateLimiter) Allow(ip string, route string) bool {
 }
 
 // cleanupVisitors 定期清理过期的 IP 记录
-func (rl *RateLimiter) cleanupVisitors() {
+func (rl *RateLimiter) cleanupVisitors(d time.Duration) {
     for {
-        time.Sleep(1 * time.Minute) // 每分钟清理一次
+        time.Sleep(d)
         rl.mu.Lock()
         now := time.Now()
         for ip, routes := range rl.visitors {
