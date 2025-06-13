@@ -5,6 +5,7 @@ go 1.21.6
 require (
 	github.com/fogleman/gg v1.3.0
 	github.com/gin-gonic/gin v1.10.0
+	github.com/sashabaranov/go-openai v1.40.1
 	github.com/silenceper/wechat/v2 v2.1.8
 	gopkg.in/yaml.v3 v3.0.1
 )

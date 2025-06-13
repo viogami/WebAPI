@@ -13,6 +13,7 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 	h1 := h.NewHandler()
 	h2 := h.NewP5ccHandler()
 	h3 := h.NewWxapiHandler()
+	h4 := h.NewAIHandler()
 
 	r.GET("/", h1.HelloHandler)
 
@@ -35,5 +36,8 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 	//清理接口调用次数
 	r.GET("/wxapi/v1/oa/basic/clear_quota", h3.ClearQuota)
 
+	// AI
+	r.POST("/gpt_reply", h4.ProcessMessage)
+	r.POST("/deepseek_reply", h4.ProcessSharpReviews)
 	return r
 }

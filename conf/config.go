@@ -15,6 +15,7 @@ type Config struct {
 	TextConfig TextConfig  `yaml:"TextConfig"`
 	P5cc       P5ccConfig  `yaml:"P5cc"`
 	Wxapi      WxapiConfig `yaml:"WxApi"`
+	AIConfig   AIConfig    `yaml:"AIConfig"`
 }
 
 type TextConfig struct {
@@ -37,16 +38,20 @@ type P5ccConfig struct {
 }
 
 type WxapiConfig struct {
-	ReplyPostURL	string           `yaml:"replyPostURL"`
+	ReplyPostURL    string           `yaml:"replyPostURL"`
 	OfficialAccount offConfig.Config `yaml:"official_account"`
 	Text            wxText           `yaml:"text"`
 }
 type wxText struct {
-	HelloText string `yaml:"helloText"`
+	HelloText   string `yaml:"helloText"`
 	SimplayText string `yaml:"simplayText"`
 	DefaultText string `yaml:"defaultText"`
 }
 
+type AIConfig struct {
+	ChatGPTUrlProxy string `yaml:"ChatGPTUrlProxy"`
+	DeepSeekUrl     string `yaml:"DeepSeekUrl"`
+}
 
 var AppConfig *Config
 

@@ -2,7 +2,7 @@ package handlers
 
 import (
 	"WebAPI/conf"
-	"WebAPI/p5cc"
+	"WebAPI/core/p5cc"
 	"image/png"
 	"net/http"
 

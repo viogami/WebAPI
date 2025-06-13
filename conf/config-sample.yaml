@@ -27,3 +27,7 @@ WxApi:
     helloText: "Hello, Welcome "
     simpleReply: "感谢你的关注"
     defaultReply: 这个消息类型开发者还没有进行相应的设置"
+
+AIConfig:
+  ChatGPTUrlProxy: "https://api.openai.com/v1/chat/completions"
+  DeepSeekUrl: "https://api.deepseek.com/v1/chat/completions"
