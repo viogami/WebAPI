@@ -1,6 +1,7 @@
 package server
 
 import (
+	"WebAPI/middleware"
 	h "WebAPI/server/handlers"
 
 	"github.com/gin-gonic/gin"
@@ -38,6 +39,6 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 
 	// AI
 	r.POST("/gpt_reply", h4.ProcessMessage)
-	r.POST("/deepseek_reply", h4.ProcessSharpReviews)
+	r.POST("/deepseek_reply",middleware.AuthMiddleware(), h4.ProcessSharpReviews) // deepseek请求需要鉴权
 	return r
 }

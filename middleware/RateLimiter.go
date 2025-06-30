@@ -8,16 +8,38 @@ import (
     "github.com/gin-gonic/gin"
 )
 
-var rateLimiter = NewRateLimiter(1 * time.Second)
+var rateLimiter = NewRateLimiter(1 * time.Second) // 限流器应为全局单例，避免每次请求都创建
 
-// RateLimiter 结构体
+const MAX_REQUESTS = 5 // 间隔内最大请求次数
+
+// RateLimitMiddleware 限流中间件
+func RateLimitMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        ip := c.ClientIP()
+        route := c.FullPath() // 获取当前路由路径
+        if !rateLimiter.allow(ip, route) {
+            if rateLimiter.blacklist[ip] {
+                c.JSON(http.StatusForbidden, gin.H{
+                    "error": "Your IP has been permanently banned.Please contact me if you think this is a mistake.",
+                })
+            } else {
+                c.JSON(http.StatusTooManyRequests, gin.H{
+                    "error": "Too many requests. Please try again later.",
+                })
+            }
+            c.Abort()
+            return
+        }
+        c.Next()
+    }
+}
+
 type RateLimiter struct {
     mu          sync.Mutex
     visitors    map[string]map[string]time.Time // 每个 IP 的路由访问记录
     blacklist   map[string]bool                 // 黑名单
     interval    time.Duration
     requests    map[string]int                  // 每个 IP 的请求计数
-    maxRequests int                             // 最大请求次数
 }
 
 // NewRateLimiter 创建一个新的 RateLimiter 实例
@@ -27,7 +49,6 @@ func NewRateLimiter(interval time.Duration) *RateLimiter {
         blacklist:   make(map[string]bool),
         interval:    interval,
         requests:    make(map[string]int),
-        maxRequests: 5, // 设置最大请求次数
     }
 
     // 定期清理过期记录
@@ -36,8 +57,8 @@ func NewRateLimiter(interval time.Duration) *RateLimiter {
     return rl
 }
 
-// Allow 判断是否允许访问
-func (rl *RateLimiter) Allow(ip string, route string) bool {
+// allow 判断是否允许访问
+func (rl *RateLimiter) allow(ip string, route string) bool {
     rl.mu.Lock()
     defer rl.mu.Unlock()
 
@@ -56,7 +77,7 @@ func (rl *RateLimiter) Allow(ip string, route string) bool {
         if time.Since(lastVisit) < rl.interval {
             // 增加请求计数
             rl.requests[ip]++
-            if rl.requests[ip] > rl.maxRequests {
+            if rl.requests[ip] > MAX_REQUESTS {
                 // 超过最大请求次数，加入黑名单
                 rl.blacklist[ip] = true
                 return false
@@ -90,27 +111,5 @@ func (rl *RateLimiter) cleanupVisitors(d time.Duration) {
             }
         }
         rl.mu.Unlock()
-    }
-}
-
-// RateLimitMiddleware 限流中间件
-func RateLimitMiddleware() gin.HandlerFunc {
-    return func(c *gin.Context) {
-        ip := c.ClientIP()
-        route := c.FullPath() // 获取当前路由路径
-        if !rateLimiter.Allow(ip, route) {
-            if rateLimiter.blacklist[ip] {
-                c.JSON(http.StatusForbidden, gin.H{
-                    "error": "Your IP has been permanently banned.Please contact me if you think this is a mistake.",
-                })
-            } else {
-                c.JSON(http.StatusTooManyRequests, gin.H{
-                    "error": "Too many requests. Please try again later.",
-                })
-            }
-            c.Abort()
-            return
-        }
-        c.Next()
     }
 }

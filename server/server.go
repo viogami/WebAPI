@@ -14,9 +14,9 @@ type Server struct {
 	router *gin.Engine
 }
 
-// 添加中间件
+// UseMiddleware 使用中间件
 func (s *Server) UseMiddleware() {
-	s.router.Use(middleware.RateLimitMiddleware())
+	s.router.Use(middleware.RateLimitMiddleware()) // 限流
 }
 
 // Run 启动 HTTP 服务
