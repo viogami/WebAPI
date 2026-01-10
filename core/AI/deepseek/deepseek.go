@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	config 	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/WebAPI/conf"
 )
 
 var (
@@ -34,7 +34,7 @@ type DeepSeekService struct {
 }
 
 func (s *DeepSeekService) InvokeDeepSeekAPI(text string) string {
-	url := config.AppConfig.AIConfig.DeepSeekUrl
+	url := conf.AppConfig.AIConfig.DeepSeekUrl
 	key := os.Getenv("DeepSeekAPIKey")
 
 	s.Messages = append(s.Messages, message{

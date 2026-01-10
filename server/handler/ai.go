@@ -1,11 +1,11 @@
 package handlers
 
 import (
-	"github.com/viogami/WebAPI/core/ai/deepseek"
-	"github.com/viogami/WebAPI/core/ai/openai"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/viogami/WebAPI/core/ai/deepseek"
+	"github.com/viogami/WebAPI/core/ai/openai"
 )
 
 type AIHandler struct {
@@ -35,5 +35,3 @@ func (h *AIHandler) ProcessSharpReviews(c *gin.Context) {
 	reply := deepseek.GetInstance().InvokeDeepSeekAPI(message)
 	c.JSON(http.StatusOK, gin.H{"reply": reply})
 }
-
-

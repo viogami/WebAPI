@@ -1,14 +1,14 @@
 package handlers
 
 import (
-	"github.com/viogami/WebAPI/conf"
-	"github.com/viogami/WebAPI/core/wxapi"
-	"github.com/viogami/WebAPI/core/wxapi/auth"
 	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/silenceper/wechat/v2"
 	m "github.com/silenceper/wechat/v2/officialaccount/menu"
+	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/WebAPI/core/wxapi"
+	"github.com/viogami/WebAPI/core/wxapi/auth"
 )
 
 type WxapiHandler struct {
@@ -20,7 +20,6 @@ func NewWxapiHandler() *WxapiHandler {
 		wx: wechat.NewWechat(),
 	}
 }
-
 
 func (w *WxapiHandler) Hello(c *gin.Context) {
 	c.JSON(200, conf.AppConfig.Wxapi.Text.HelloText)

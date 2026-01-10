@@ -3,7 +3,7 @@ package server
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/viogami/WebAPI/middleware"
-	h "github.com/viogami/WebAPI/server/handlers"
+	h "github.com/viogami/WebAPI/server/handler"
 )
 
 func (s *Server) RegisterRoutes() *gin.Engine {

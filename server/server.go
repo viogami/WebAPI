@@ -1,12 +1,12 @@
 package server
 
 import (
-	"github.com/viogami/WebAPI/conf"
-	"github.com/viogami/WebAPI/middleware"
 	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/WebAPI/middleware"
 )
 
 type Server struct {
@@ -34,7 +34,7 @@ func NewServer(cfg *conf.Config) *Server {
 	gin.SetMode(cfg.GinMode)
 
 	g := gin.Default()
-	
+
 	// 创建 Server 实例
 	return &Server{
 		router: g,

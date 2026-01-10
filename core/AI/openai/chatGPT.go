@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	goOpenai "github.com/sashabaranov/go-openai"
-	config "github.com/viogami/WebAPI/conf"
+	"github.com/viogami/WebAPI/conf"
 )
 
 var (
@@ -31,7 +31,7 @@ type ChatGPTService struct {
 }
 
 func NewChatGPTService() *ChatGPTService {
-	URL_PROXY := config.AppConfig.AIConfig.ChatGPTUrlProxy
+	URL_PROXY := conf.AppConfig.AIConfig.ChatGPTUrlProxy
 	APIKey := os.Getenv("ChatGPTAPIKey")
 
 	s := new(ChatGPTService)
