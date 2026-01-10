@@ -3,10 +3,10 @@ package handlers
 import (
 	"image/png"
 	"net/http"
+	"webapi/conf"
+	"webapi/core/p5cc"
 
 	"github.com/gin-gonic/gin"
-	"github.com/viogami/webapi/conf"
-	"github.com/viogami/webapi/core/p5cc"
 )
 
 type P5ccHandler struct {

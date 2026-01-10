@@ -6,9 +6,9 @@ import (
 	"image/color"
 	"os"
 	"strings"
+	"webapi/conf"
 
 	"github.com/fogleman/gg"
-	"github.com/viogami/webapi/conf"
 )
 
 type P5ccConfig struct {

@@ -2,10 +2,10 @@ package handlers
 
 import (
 	"net/http"
+	"webapi/core/ai/deepseek"
+	"webapi/core/ai/openai"
 
 	"github.com/gin-gonic/gin"
-	"github.com/viogami/webapi/core/ai/deepseek"
-	"github.com/viogami/webapi/core/ai/openai"
 )
 
 type AIHandler struct {

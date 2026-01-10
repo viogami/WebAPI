@@ -2,13 +2,13 @@ package handlers
 
 import (
 	"log"
+	"webapi/conf"
+	"webapi/core/wxapi"
+	"webapi/core/wxapi/auth"
 
 	"github.com/gin-gonic/gin"
 	"github.com/silenceper/wechat/v2"
 	m "github.com/silenceper/wechat/v2/officialaccount/menu"
-	"github.com/viogami/webapi/conf"
-	"github.com/viogami/webapi/core/wxapi"
-	"github.com/viogami/webapi/core/wxapi/auth"
 )
 
 type WxapiHandler struct {

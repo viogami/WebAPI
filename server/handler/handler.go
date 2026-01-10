@@ -3,9 +3,9 @@ package handlers
 import (
 	"net/http"
 	"strconv"
+	"webapi/conf"
 
 	"github.com/gin-gonic/gin"
-	"github.com/viogami/webapi/conf"
 )
 
 type Handler struct {

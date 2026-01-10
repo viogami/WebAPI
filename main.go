@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/viogami/webapi/conf"
-	"github.com/viogami/webapi/server"
+	"webapi/conf"
+	"webapi/server"
 	"log"
 )
 
@@ -12,7 +12,10 @@ func main() {
 	}
 
 	s := server.NewServer(conf.AppConfig)
+
 	s.UseMiddleware()
+
 	s.RegisterRoutes()
+
 	s.Run()
 }

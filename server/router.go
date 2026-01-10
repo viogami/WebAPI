@@ -2,8 +2,8 @@ package server
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/viogami/webapi/middleware"
-	h "github.com/viogami/webapi/server/handler"
+	"webapi/middleware"
+	h "webapi/server/handler"
 )
 
 func (s *Server) RegisterRoutes() *gin.Engine {

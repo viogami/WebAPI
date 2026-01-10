@@ -5,9 +5,9 @@ import (
 	"log/slog"
 	"os"
 	"sync"
+	"webapi/conf"
 
 	goOpenai "github.com/sashabaranov/go-openai"
-	"github.com/viogami/webapi/conf"
 )
 
 var (

@@ -8,8 +8,7 @@ import (
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/viogami/webapi/conf"
+	"webapi/conf"
 )
 
 var (
