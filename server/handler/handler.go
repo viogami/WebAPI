@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/webapi/conf"
 )
 
 type Handler struct {

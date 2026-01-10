@@ -6,9 +6,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/silenceper/wechat/v2"
 	m "github.com/silenceper/wechat/v2/officialaccount/menu"
-	"github.com/viogami/WebAPI/conf"
-	"github.com/viogami/WebAPI/core/wxapi"
-	"github.com/viogami/WebAPI/core/wxapi/auth"
+	"github.com/viogami/webapi/conf"
+	"github.com/viogami/webapi/core/wxapi"
+	"github.com/viogami/webapi/core/wxapi/auth"
 )
 
 type WxapiHandler struct {

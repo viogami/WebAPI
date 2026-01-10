@@ -8,7 +8,7 @@ import (
 	"strings"
 
 	"github.com/fogleman/gg"
-	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/webapi/conf"
 )
 
 type P5ccConfig struct {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/webapi/conf"
 )
 
 var (

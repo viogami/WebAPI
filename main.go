@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/viogami/WebAPI/conf"
-	"github.com/viogami/WebAPI/server"
+	"github.com/viogami/webapi/conf"
+	"github.com/viogami/webapi/server"
 	"log"
 )
 

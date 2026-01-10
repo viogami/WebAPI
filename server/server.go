@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
-	"github.com/viogami/WebAPI/conf"
-	"github.com/viogami/WebAPI/middleware"
+	"github.com/viogami/webapi/conf"
+	"github.com/viogami/webapi/middleware"
 )
 
 type Server struct {

@@ -7,7 +7,7 @@ import (
 	"sync"
 
 	goOpenai "github.com/sashabaranov/go-openai"
-	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/webapi/conf"
 )
 
 var (

@@ -8,7 +8,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/webapi/conf"
 )
 
 // WxTextMsg 微信文本消息结构体

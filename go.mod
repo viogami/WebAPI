@@ -1,4 +1,4 @@
-module github.com/viogami/WebAPI
+module github.com/viogami/webapi
 
 go 1.25.5
 
