@@ -15,6 +15,13 @@ type WxapiHandler struct {
 	wx *wechat.Wechat
 }
 
+func NewWxapiHandler() *WxapiHandler {
+	return &WxapiHandler{
+		wx: wechat.NewWechat(),
+	}
+}
+
+
 func (w *WxapiHandler) Hello(c *gin.Context) {
 	c.JSON(200, conf.AppConfig.Wxapi.Text.HelloText)
 }
@@ -140,10 +147,4 @@ func (w *WxapiHandler) WXMsgReceive(c *gin.Context) {
 
 	msg := textMsg.WXMsgReceive()
 	_, _ = c.Writer.Write(msg)
-}
-
-func NewWxapiHandler() *WxapiHandler {
-	return &WxapiHandler{
-		wx: wechat.NewWechat(),
-	}
 }

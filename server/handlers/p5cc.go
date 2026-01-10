@@ -10,7 +10,10 @@ import (
 )
 
 type P5ccHandler struct {
-	
+}
+
+func NewP5ccHandler() *P5ccHandler {
+	return &P5ccHandler{}
 }
 
 // p5cc Get请求
@@ -84,8 +87,4 @@ func (p *P5ccHandler) POST(c *gin.Context) {
 	c.Writer.Header().Set("Content-Type", "image/png")
 	png.Encode(c.Writer, img)
 
-}
-
-func NewP5ccHandler() *P5ccHandler {
-	return &P5ccHandler{}
 }

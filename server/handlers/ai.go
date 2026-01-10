@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"WebAPI/core/AI/deepseek"
-	myopenai "WebAPI/core/AI/openai"
+	"WebAPI/core/ai/deepseek"
+	"WebAPI/core/ai/openai"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -11,16 +11,21 @@ import (
 type AIHandler struct {
 }
 
-// GPT
+func NewAIHandler() *AIHandler {
+	return &AIHandler{}
+}
+
+// OpenAI ChatGPT
 func (h *AIHandler) ProcessMessage(c *gin.Context) {
 	message := c.PostForm("message")
-	reply := myopenai.GetInstance().InvokeChatGPTAPI(message)
+	reply := openai.GetInstance().InvokeChatGPTAPI(message)
 	c.JSON(http.StatusOK, gin.H{"reply": reply})
 }
+
 func (h *AIHandler) ProcessMessageWithRole(c *gin.Context) {
 	message := c.PostForm("message")
 	role := c.PostForm("role")
-	reply := myopenai.GetInstance().InvokeChatGPTAPIWithRole(message, role)
+	reply := openai.GetInstance().InvokeChatGPTAPIWithRole(message, role)
 	c.JSON(http.StatusOK, gin.H{"reply": reply})
 }
 
@@ -31,6 +36,4 @@ func (h *AIHandler) ProcessSharpReviews(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"reply": reply})
 }
 
-func NewAIHandler() *AIHandler {
-	return &AIHandler{}
-}
+

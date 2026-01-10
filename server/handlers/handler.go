@@ -1,18 +1,17 @@
 package handlers
 
 import (
+	"WebAPI/conf"
 	"net/http"
 	"strconv"
-	"WebAPI/conf"
 
 	"github.com/gin-gonic/gin"
 )
 
 type Handler struct {
-	
 }
 
-func(h *Handler) HelloHandler(c *gin.Context) {
+func (h *Handler) HelloHandler(c *gin.Context) {
 	c.String(http.StatusOK, conf.AppConfig.TextConfig.HelloText)
 }
 
@@ -21,29 +20,44 @@ func NewHandler() *Handler {
 }
 
 // 创建辅助函数处理不同类型参数获取
-func getFloatParam(c *gin.Context, param string, defaultValue float64) float64 {
+func getFloatParam(c *gin.Context, param string, defaultValue ...float64) float64 {
 	if paramStr := c.PostForm(param); paramStr != "" {
 		if val, err := strconv.ParseFloat(paramStr, 64); err == nil {
 			return val
 		}
 	}
-	return defaultValue
+
+	if len(defaultValue) > 0 {
+		return defaultValue[0]
+	}
+
+	return 0
 }
 
-func getBoolParam(c *gin.Context, param string, defaultValue bool) bool {
+func getBoolParam(c *gin.Context, param string, defaultValue ...bool) bool {
 	if paramStr := c.PostForm(param); paramStr != "" {
 		if val, err := strconv.ParseBool(paramStr); err == nil {
 			return val
 		}
 	}
-	return defaultValue
+
+	if len(defaultValue) > 0 {
+		return defaultValue[0]
+	}
+
+	return false
 }
 
-func getIntParam(c *gin.Context, param string, defaultValue int) int {
+func getIntParam(c *gin.Context, param string, defaultValue ...int) int {
 	if paramStr := c.PostForm(param); paramStr != "" {
 		if val, err := strconv.Atoi(paramStr); err == nil {
 			return val
 		}
 	}
-	return defaultValue
+
+	if len(defaultValue) > 0 {
+		return defaultValue[0]
+	}
+
+	return 0
 }
