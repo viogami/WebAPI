@@ -23,6 +23,7 @@ type TextConfig struct {
 }
 
 type P5ccConfig struct {
+	AssetPath  string  `yaml:"assetPath"`
 	FontSize   float64 `yaml:"fontSize"`
 	FontFamily string  `yaml:"fontFamily"`
 	Gutter     float64 `yaml:"gutter"`

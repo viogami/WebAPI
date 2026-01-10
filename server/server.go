@@ -1,8 +1,8 @@
 package server
 
 import (
-	"WebAPI/conf"
-	"WebAPI/middleware"
+	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/WebAPI/middleware"
 	"fmt"
 	"log"
 

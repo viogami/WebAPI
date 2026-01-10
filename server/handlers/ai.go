@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"WebAPI/core/ai/deepseek"
-	"WebAPI/core/ai/openai"
+	"github.com/viogami/WebAPI/core/ai/deepseek"
+	"github.com/viogami/WebAPI/core/ai/openai"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

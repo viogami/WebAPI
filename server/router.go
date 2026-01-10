@@ -1,10 +1,9 @@
 package server
 
 import (
-	"WebAPI/middleware"
-	h "WebAPI/server/handlers"
-
 	"github.com/gin-gonic/gin"
+	"github.com/viogami/WebAPI/middleware"
+	h "github.com/viogami/WebAPI/server/handlers"
 )
 
 func (s *Server) RegisterRoutes() *gin.Engine {
@@ -40,7 +39,7 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 
 	// AI
 	r.POST("/gpt", h4.ProcessMessage)
-	r.POST("/deepseek",middleware.AuthMiddleware(), h4.ProcessSharpReviews) // deepseek请求需要鉴权
+	r.POST("/deepseek", middleware.AuthMiddleware(), h4.ProcessSharpReviews) // deepseek请求需要鉴权
 
 	// Tool
 	r.GET("/tool/best-work-time", h5.BestWorkTime)

@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"WebAPI/conf"
-	"WebAPI/core/wxapi"
-	"WebAPI/core/wxapi/auth"
+	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/WebAPI/core/wxapi"
+	"github.com/viogami/WebAPI/core/wxapi/auth"
 	"log"
 
 	"github.com/gin-gonic/gin"

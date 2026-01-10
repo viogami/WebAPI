@@ -1,13 +1,13 @@
 package openai
 
 import (
-	config "WebAPI/conf"
 	"context"
 	"log/slog"
 	"os"
 	"sync"
 
 	goOpenai "github.com/sashabaranov/go-openai"
+	config "github.com/viogami/WebAPI/conf"
 )
 
 var (

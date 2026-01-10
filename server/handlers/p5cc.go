@@ -1,8 +1,8 @@
 package handlers
 
 import (
-	"WebAPI/conf"
-	"WebAPI/core/p5cc"
+	"github.com/viogami/WebAPI/conf"
+	"github.com/viogami/WebAPI/core/p5cc"
 	"image/png"
 	"net/http"
 

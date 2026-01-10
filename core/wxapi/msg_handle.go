@@ -1,13 +1,14 @@
 package wxapi
 
 import (
-	"WebAPI/conf"
 	"encoding/xml"
 	"io"
 	"log"
 	"net/http"
 	"net/url"
 	"time"
+
+	"github.com/viogami/WebAPI/conf"
 )
 
 // WxTextMsg 微信文本消息结构体

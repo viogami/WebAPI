@@ -1,6 +1,6 @@
-module WebAPI
+module github.com/viogami/WebAPI
 
-go 1.21.6
+go 1.25.5
 
 require (
 	github.com/fogleman/gg v1.3.0

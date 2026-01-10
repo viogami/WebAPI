@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/fogleman/gg"
+	"github.com/viogami/WebAPI/conf"
 )
 
 type P5ccConfig struct {
@@ -50,7 +51,7 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 	// 创建画布
 	dc := gg.NewContext(canvasWidth, canvasHeight)
 	// 加载画布
-	canvas, err := loadImage("p5cc/assets/canvas.png")
+	canvas, err := loadImage(conf.AppConfig.P5cc.AssetPath + "canvas.png")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load canvas image: %v", err)
 	}
@@ -59,7 +60,7 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 	dc.DrawImage(canvas, canvasX, canvasY)
 
 	// 加载背景图像
-	baseCard, err := loadImage("p5cc/assets/base.png")
+	baseCard, err := loadImage(conf.AppConfig.P5cc.AssetPath + "base.png")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load base image: %v", err)
 	}
@@ -69,7 +70,7 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 
 	// 加载并绘制 Logo
 	if option.ShowLogo {
-		logo, err := loadImage("p5cc/assets/logo.png")
+		logo, err := loadImage(conf.AppConfig.P5cc.AssetPath + "logo.png")
 		if err != nil {
 			return nil, fmt.Errorf("failed to load logo image: %v", err)
 		}
@@ -100,7 +101,7 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 
 	for i, line := range res {
 		boxText := NewBoxText(line, options)
-		boxText.Draw(dc,len(res)/2-i)  // 传入最大行数/2减行数，draw函数中修改y的值，自动上移实现垂直居中。
+		boxText.Draw(dc, len(res)/2-i) // 传入最大行数/2减行数，draw函数中修改y的值，自动上移实现垂直居中。
 	}
 
 	return dc.Image(), nil

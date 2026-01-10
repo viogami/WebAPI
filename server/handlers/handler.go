@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"WebAPI/conf"
+	"github.com/viogami/WebAPI/conf"
 	"net/http"
 	"strconv"
 

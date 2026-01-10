@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"WebAPI/core/tool"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,10 +12,7 @@ func NewToolHandler() *ToolHandler {
 }
 
 func (h *ToolHandler) BestWorkTime(c *gin.Context) {
-	avgMonthlyHours := getFloatParam(c, "avg_monthly_hours")
-	remainingWorkDays := getIntParam(c, "remaining_work_days")
-
-	reply := tool.CalculateBestWorkTime(avgMonthlyHours, remainingWorkDays)
+	reply := "开发中"
 
 	c.JSON(200, gin.H{"best_work_time": reply})
 }
