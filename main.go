@@ -7,7 +7,7 @@ import (
 )
 
 func main() {
-	if err := conf.InitConfig("conf/config.yaml"); err != nil {
+	if err := conf.InitConfig(); err != nil {
 		log.Fatalf("Config error: %v", err)
 	}
 

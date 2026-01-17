@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+
+# Go build output
+main
+webapi
+*.exe
+*.test
+*.out
+
+# Docker
+Dockerfile
+.dockerignore
+
+# IDE settings
+.vscode
+.idea
+
+# OS specific
+.DS_Store
+Thumbs.db
+
+# Temp
+tmp/

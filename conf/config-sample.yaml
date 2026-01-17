@@ -1,12 +1,13 @@
-Host: "localhost" # 主机地址
+Host: "" # 主机地址
 Port: 8080 # 监听端口
 GinMode: debug # Gin模式
 TextConfig:
   helloText: This text will display on the "/" router.
 
 P5cc:
+  assetPath: "core/p5cc/assets/" # 资源文件路径
   fontSize: 120 # 字体大小
-  fontFamily: "p5cc/assets/HarmonyOSSansSC-Bold.TTF" # 字体
+  fontFamily: "core/p5cc/assets/HarmonyOSSansSC-Bold.TTF" # 字体
   gutter: 10 # 字体间距
   padding: 240 # 文字边距
   textAlign: center # 文字对齐方式{center,left}
