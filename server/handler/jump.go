@@ -1,9 +1,8 @@
 package handlers
 
 import (
+	"io"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
 	"strings"
 	"webapi/core/jump"
 
@@ -18,44 +17,34 @@ func NewJumpHandler() *JumpHandler {
 }
 
 func (h *JumpHandler) GithubProxy(c *gin.Context) {
-	// 仅允许 GET / HEAD
-	if c.Request.Method != http.MethodGet && c.Request.Method != http.MethodHead {
-		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "method not allowed"})
-		return
-	}
-
 	proxyPath := strings.TrimPrefix(c.Param("proxyPath"), "/")
 
-	targetHost, targetPath, err := jump.ParseGithubProxyPath(proxyPath)
+	targetURL, err := jump.BuildGithubURL(proxyPath, c.Request.URL.RawQuery)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	targetURL, err := url.Parse("https://" + targetHost)
+	resp, err := http.Get(targetURL)
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid target host"})
+		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
 		return
 	}
+	defer resp.Body.Close()
 
-	proxy := httputil.NewSingleHostReverseProxy(targetURL)
+	// 透传状态码
+	c.Status(resp.StatusCode)
 
-	// 自定义 Director，防止 Gin 改写
-	proxy.Director = func(req *http.Request) {
-		req.URL.Scheme = "https"
-		req.URL.Host = targetHost
-		req.URL.Path = targetPath
-		req.URL.RawQuery = c.Request.URL.RawQuery
-		req.Host = targetHost
-
-		// 可选：清理部分 Header
-		req.Header.Del("Referer")
+	// 透传 Content-Type（SVG / PNG / JSON 都靠它）
+	if ct := resp.Header.Get("Content-Type"); ct != "" {
+		c.Header("Content-Type", ct)
 	}
 
-	// 错误处理
-	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
-		c.JSON(http.StatusBadGateway, gin.H{"error": err.Error()})
+	// 可选：Cache-Control
+	if cc := resp.Header.Get("Cache-Control"); cc != "" {
+		c.Header("Cache-Control", cc)
 	}
 
-	proxy.ServeHTTP(c.Writer, c.Request)
+	// 原样返回 body
+	_, _ = io.Copy(c.Writer, resp.Body)
 }

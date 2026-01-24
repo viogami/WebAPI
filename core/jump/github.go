@@ -13,19 +13,22 @@ var githubAllowHosts = map[string]bool{
 }
 
 // /jump/github/{host}/{path...} github 代理路径解析
-func ParseGithubProxyPath(proxyPath string) (string, string, error) {
+func BuildGithubURL(proxyPath, rawQuery string) (string, error) {
 	parts := strings.SplitN(proxyPath, "/", 2)
 	if len(parts) < 2 {
-		return "", "", errors.New("invalid proxy path")
+		return "", errors.New("invalid proxy path")
 	}
 
-	targetHost := parts[0]
-	targetPath := "/" + parts[1]
-
-	// Host 白名单校验
-	if !githubAllowHosts[targetHost] {
-		return "", "", errors.New("host not allowed")
+	host := parts[0]
+	path := parts[1]
+	
+	if !githubAllowHosts[host] {
+		return "", errors.New("host not allowed")
 	}
 
-	return targetHost, targetPath, nil
+	u := "https://" + host + "/" + path
+	if rawQuery != "" {
+		u += "?" + rawQuery
+	}
+	return u, nil
 }
