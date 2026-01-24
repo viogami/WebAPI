@@ -1,9 +1,10 @@
 package server
 
 import (
-	"github.com/gin-gonic/gin"
 	"webapi/middleware"
 	h "webapi/server/handler"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (s *Server) RegisterRoutes() *gin.Engine {
@@ -14,7 +15,7 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 	h2 := h.NewP5ccHandler()
 	h3 := h.NewWxapiHandler()
 	h4 := h.NewAIHandler()
-	h5 := h.NewToolHandler()
+	h5 := h.NewJumpHandler()
 
 	r.GET("/", h1.HelloHandler)
 
@@ -41,8 +42,8 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 	r.POST("/gpt", h4.ProcessMessage)
 	r.POST("/deepseek", middleware.AuthMiddleware(), h4.ProcessSharpReviews) // deepseek请求需要鉴权
 
-	// Tool
-	r.GET("/tool/best-work-time", h5.BestWorkTime)
+	// Jump
+	r.GET("/jump/github/*proxyPath", h5.GithubProxy)
 
 	return r
 }
