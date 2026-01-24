@@ -1,7 +1,6 @@
 package conf
 
 import (
-	"errors"
 	"fmt"
 	"os"
 
@@ -64,7 +63,7 @@ func InitConfig() error {
 	}
 
 	// 读取配置文件
-	data, err := readConfig()
+	data, err := os.ReadFile("conf/config.yaml")
 	if err != nil {
 		return fmt.Errorf("failed to read config file: %v", err)
 	}
@@ -80,18 +79,4 @@ func InitConfig() error {
 	}
 
 	return nil
-}
-
-func readConfig() ([]byte, error) {
-	data, err := os.ReadFile("conf/config.yaml")
-	if err == nil {
-		return data, nil
-	}
-
-	if !errors.Is(err, os.ErrNotExist) {
-		return nil, err
-	}
-
-	// 兜底配置
-	return os.ReadFile("conf/config-sample.yaml")
 }
