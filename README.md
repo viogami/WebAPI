@@ -10,6 +10,8 @@
 
 * [AI回复功能](https://github.com/viogami/WebAPI/tree/master/core/AI)，集成openai和deepseek的api，提供多种ai功能。
 
+* CH后端接口，重新实现了一遍，用于auto-memories-doll调用
+
 架构：
 
 * 基于golang的gin框架，读取配置文件 `config.yaml`
