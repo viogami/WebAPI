@@ -1,6 +1,7 @@
 package server
 
 import (
+	"log"
 	"webapi/middleware"
 	h "webapi/server/handler"
 
@@ -16,6 +17,10 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 	h3 := h.NewWxapiHandler()
 	h4 := h.NewAIHandler()
 	h5 := h.NewJumpHandler()
+	h6, err := h.NewCHHandler(s.cfg.CHApi)
+	if err != nil {
+		log.Printf("init CHApi handler failed: %v", err)
+	}
 
 	r.GET("/", h1.HelloHandler)
 
@@ -44,6 +49,9 @@ func (s *Server) RegisterRoutes() *gin.Engine {
 
 	// Jump
 	r.GET("/jump/github/*proxyPath", h5.GithubProxy)
+
+	// C.H
+	h6.RegisterRoutes(r)
 
 	return r
 }

@@ -12,10 +12,20 @@ type Config struct {
 	Host       string      `yaml:"Host"`
 	Port       int         `yaml:"Port"`
 	GinMode    string      `yaml:"GinMode"`
+	ConfigMode string      `yaml:"ConfigMode"`
 	TextConfig TextConfig  `yaml:"TextConfig"`
 	P5cc       P5ccConfig  `yaml:"P5cc"`
 	Wxapi      WxapiConfig `yaml:"WxApi"`
 	AIConfig   AIConfig    `yaml:"AIConfig"`
+	CHApi      CHApiConfig `yaml:"CHApi"`
+}
+
+type CHApiConfig struct {
+	Enabled         bool   `yaml:"enabled"`
+	DatabaseURL     string `yaml:"databaseURL"`
+	SessionTTLHours int    `yaml:"sessionTTLHours"`
+	PasswordPepper  string `yaml:"passwordPepper"`
+	AllowedOrigin   string `yaml:"allowedOrigin"`
 }
 
 type TextConfig struct {
@@ -73,10 +83,22 @@ func InitConfig() error {
 		return fmt.Errorf("failed to parse config: %v", err)
 	}
 
+	// 加载环境变量覆盖配置
+	if AppConfig.ConfigMode == "env" {
+		loadEnvConfig()
+	}
+
 	// 验证配置
 	if AppConfig.Port <= 0 {
 		return fmt.Errorf("invalid port: %d", AppConfig.Port)
 	}
 
 	return nil
+}
+
+func loadEnvConfig() {
+	// 读取CHApi相关环境变量并覆盖配置
+	AppConfig.CHApi.PasswordPepper = os.Getenv("CH_API_PASSWORD_PEPPER")
+	AppConfig.CHApi.AllowedOrigin = os.Getenv("CH_API_ALLOWED_ORIGIN")
+	AppConfig.CHApi.DatabaseURL = os.Getenv("CH_API_DATABASE_URL")
 }

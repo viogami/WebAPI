@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/gin-gonic/gin"
 	"webapi/conf"
-	"webapi/middleware"
+
+	"github.com/gin-gonic/gin"
 )
 
 type Server struct {
@@ -16,7 +16,7 @@ type Server struct {
 
 // UseMiddleware 使用中间件
 func (s *Server) UseMiddleware() {
-	s.router.Use(middleware.RateLimitMiddleware()) // 限流
+	// s.router.Use(middleware.RateLimitMiddleware()) // 限流
 }
 
 // Run 启动 HTTP 服务

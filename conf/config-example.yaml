@@ -1,0 +1,43 @@
+Host: "" 
+Port: 8080 # 监听端口
+GinMode: release # Gin模式
+ConfigMode: file # 配置加载模式，支持file和env，file从conf/config.yaml加载，env从环境变量加载
+
+TextConfig:
+  helloText: This text will display on the "/" router.
+
+P5cc:
+  assetPath: "core/p5cc/assets/" # 资源文件路径
+  fontSize: 120 # 字体大小
+  fontFamily: "core/p5cc/assets/HarmonyOSSansSC-Bold.TTF" # 字体
+  gutter: 10 # 字体间距
+  padding: 240 # 文字边距
+  textAlign: center # 文字对齐方式{center,left}
+  redProb: 0.33 # 红色字体概率[0,1]
+  showLogo: true # 是否显示Logo
+  logoScale: 1.0 # Logo缩放比例
+  logoOffset: 240 # Logo偏移量
+  showWtm: "" # 水印文字，为空则不显示
+
+# Path: wxapi/config/app.yaml
+WxApi:
+  replyPostURL: "http://your_domain_here/wx/reply" # 请修改为你的域名地址/wx/reply
+  official_account:
+    token: "your_token_here"
+    app_id: "123456"
+    app_secret: "your_app_secret_here"
+  text:
+    helloText: "Hello, Welcome to My WEBAPI,this is the backend of the '未来bot研究所'"
+    simpleReply: "感谢你的关注,我是聊天bot:vio🥰使用ChatGpt4接口，发送消息即可对话~"
+    defaultReply: "残念！这个消息类型我的开发者还没有进行相应的设置😭"
+
+AIConfig:
+  ChatGPTUrlProxy: "https://api.openai.com/v1/chat/completions"
+  DeepSeekUrl: "https://api.deepseek.com/v1/chat/completions"
+
+CHApi:
+  enabled: false
+  databaseURL: ""
+  sessionTTLHours: 168
+  passwordPepper: "dev-pepper"
+  allowedOrigin: "http://localhost:3000"

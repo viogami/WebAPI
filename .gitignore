@@ -2,4 +2,6 @@ main
 main.exe
 .vscode
 .idea
-conf/config-old.yaml
+
+conf/config.yaml
+.env
