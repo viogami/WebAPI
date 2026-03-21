@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 	"webapi/conf"
+	chcore "webapi/core/c.h"
 
 	"github.com/gin-gonic/gin"
 	"github.com/jackc/pgx/v5"
@@ -17,8 +18,10 @@ import (
 )
 
 type CHHandler struct {
-	cfg  conf.CHApiConfig
-	pool *pgxpool.Pool
+	cfg         conf.CHApiConfig
+	pool        *pgxpool.Pool
+	userService *chcore.UserService
+	rankService *chcore.RankService
 }
 
 type registerRequest struct {
@@ -64,12 +67,25 @@ func NewCHHandler(cfg conf.CHApiConfig) (*CHHandler, error) {
 			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 			defer cancel()
 
-			pool, err := pgxpool.New(ctx, cfg.DatabaseURL)
+			poolCfg, err := pgxpool.ParseConfig(cfg.DatabaseURL)
+			if err != nil {
+				return nil, fmt.Errorf("parse db config failed: %w", err)
+			}
+
+			poolCfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+			poolCfg.ConnConfig.StatementCacheCapacity = 0
+
+			pool, err := pgxpool.NewWithConfig(ctx, poolCfg)
 			if err != nil {
 				return nil, fmt.Errorf("connect db failed: %w", err)
 			}
 
-			return &CHHandler{cfg: cfg, pool: pool}, nil
+			return &CHHandler{
+				cfg:         cfg,
+				pool:        pool,
+				userService: chcore.NewUserService(pool, cfg.PasswordPepper, cfg.SessionTTLHours),
+				rankService: chcore.NewRankService(pool),
+			}, nil
 		}
 	}
 
@@ -81,10 +97,11 @@ func (h *CHHandler) RegisterRoutes(r *gin.Engine) {
 		return
 	}
 
+	r.Use(h.corsMiddleware())
+
 	r.GET("/CH/healthz", h.Healthz)
 
 	v1 := r.Group("/CH/api/v1")
-	v1.Use(h.corsMiddleware())
 	{
 		v1.OPTIONS("/*any", func(c *gin.Context) {
 			c.Status(http.StatusNoContent)
@@ -115,49 +132,24 @@ func (h *CHHandler) Register(c *gin.Context) {
 		return
 	}
 
-	username := strings.TrimSpace(req.Username)
-	if len(username) < 3 || len(username) > 32 {
-		writeError(c, http.StatusBadRequest, "username length must be 3-32")
-		return
-	}
-	if len(req.Password) < 4 {
-		writeError(c, http.StatusBadRequest, "password is too short")
-		return
-	}
-
-	salt, err := randomHex(16)
+	result, err := h.userService.Register(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
-		writeError(c, http.StatusInternalServerError, "failed to generate salt")
-		return
-	}
-	hash := hashPassword(req.Password, salt, h.cfg.PasswordPepper)
-
-	var userID int64
-	err = h.pool.QueryRow(c.Request.Context(), `
-		INSERT INTO users (username, password_salt, password_hash)
-		VALUES ($1, $2, $3)
-		RETURNING id
-	`, username, salt, hash).Scan(&userID)
-	if err != nil {
-		if strings.Contains(err.Error(), "duplicate key") {
-			writeError(c, http.StatusConflict, "username already exists")
-			return
+		switch {
+		case errors.Is(err, chcore.ErrInvalidUsernameLength), errors.Is(err, chcore.ErrPasswordTooShort):
+			writeError(c, http.StatusBadRequest, err.Error())
+		case errors.Is(err, chcore.ErrUsernameExists):
+			writeError(c, http.StatusConflict, err.Error())
+		default:
+			writeError(c, http.StatusInternalServerError, "create user failed")
 		}
-		writeError(c, http.StatusInternalServerError, "create user failed")
-		return
-	}
-
-	token, expiresAt, err := h.createSession(c.Request.Context(), userID)
-	if err != nil {
-		writeError(c, http.StatusInternalServerError, "create session failed")
 		return
 	}
 
 	c.JSON(http.StatusCreated, authResponse{
-		Token:     token,
-		UserID:    userID,
-		Username:  username,
-		ExpiresAt: expiresAt.Format(time.RFC3339),
+		Token:     result.Token,
+		UserID:    result.UserID,
+		Username:  result.Username,
+		ExpiresAt: result.ExpiresAt.Format(time.RFC3339),
 	})
 }
 
@@ -168,44 +160,24 @@ func (h *CHHandler) Login(c *gin.Context) {
 		return
 	}
 
-	username := strings.TrimSpace(req.Username)
-	if username == "" || req.Password == "" {
-		writeError(c, http.StatusBadRequest, "username and password are required")
-		return
-	}
-
-	var userID int64
-	var salt, storedHash string
-	err := h.pool.QueryRow(c.Request.Context(), `
-		SELECT id, password_salt, password_hash
-		FROM users
-		WHERE username = $1
-	`, username).Scan(&userID, &salt, &storedHash)
+	result, err := h.userService.Login(c.Request.Context(), req.Username, req.Password)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			writeError(c, http.StatusUnauthorized, "invalid username or password")
-			return
+		switch {
+		case errors.Is(err, chcore.ErrUsernameAndPasswordRequired):
+			writeError(c, http.StatusBadRequest, err.Error())
+		case errors.Is(err, chcore.ErrInvalidUsernameOrPassword):
+			writeError(c, http.StatusUnauthorized, err.Error())
+		default:
+			writeError(c, http.StatusInternalServerError, "query user failed")
 		}
-		writeError(c, http.StatusInternalServerError, "query user failed")
-		return
-	}
-
-	if hashPassword(req.Password, salt, h.cfg.PasswordPepper) != storedHash {
-		writeError(c, http.StatusUnauthorized, "invalid username or password")
-		return
-	}
-
-	token, expiresAt, err := h.createSession(c.Request.Context(), userID)
-	if err != nil {
-		writeError(c, http.StatusInternalServerError, "create session failed")
 		return
 	}
 
 	c.JSON(http.StatusOK, authResponse{
-		Token:     token,
-		UserID:    userID,
-		Username:  username,
-		ExpiresAt: expiresAt.Format(time.RFC3339),
+		Token:     result.Token,
+		UserID:    result.UserID,
+		Username:  result.Username,
+		ExpiresAt: result.ExpiresAt.Format(time.RFC3339),
 	})
 }
 
@@ -216,16 +188,15 @@ func (h *CHHandler) Me(c *gin.Context) {
 		return
 	}
 
-	var username string
-	err := h.pool.QueryRow(c.Request.Context(), `SELECT username FROM users WHERE id = $1`, userID).Scan(&username)
+	result, err := h.userService.Me(c.Request.Context(), userID)
 	if err != nil {
 		writeError(c, http.StatusInternalServerError, "query user failed")
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"user_id":   userID,
-		"username":  username,
+		"user_id":   result.UserID,
+		"username":  result.Username,
 		"logged_in": true,
 	})
 }
@@ -244,40 +215,28 @@ func (h *CHHandler) UploadHistory(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	if len(req.Items) == 0 {
-		writeError(c, http.StatusBadRequest, "items cannot be empty")
-		return
-	}
-
-	tx, err := h.pool.Begin(c.Request.Context())
-	if err != nil {
-		writeError(c, http.StatusInternalServerError, "begin tx failed")
-		return
-	}
-	defer tx.Rollback(c.Request.Context())
-
+	items := make([]chcore.HistoryUploadItem, 0, len(req.Items))
 	for _, item := range req.Items {
-		if item.AnimeID == 0 || strings.TrimSpace(item.Name) == "" || strings.TrimSpace(item.Cover) == "" {
-			writeError(c, http.StatusBadRequest, "anime_id, name, cover are required")
-			return
-		}
-		clientAddedAt := parseRFC3339Nullable(item.AddedAt)
-		_, err := tx.Exec(c.Request.Context(), `
-			INSERT INTO anime_history_records (user_id, anime_id, anime_name, cover, client_added_at)
-			VALUES ($1, $2, $3, $4, $5)
-		`, userID, item.AnimeID, item.Name, item.Cover, clientAddedAt)
-		if err != nil {
-			writeError(c, http.StatusInternalServerError, "insert history failed")
-			return
-		}
+		items = append(items, chcore.HistoryUploadItem{
+			AnimeID: item.AnimeID,
+			Name:    item.Name,
+			Cover:   item.Cover,
+			AddedAt: item.AddedAt,
+		})
 	}
 
-	if err := tx.Commit(c.Request.Context()); err != nil {
-		writeError(c, http.StatusInternalServerError, "commit failed")
+	uploaded, err := h.userService.UploadHistory(c.Request.Context(), userID, items)
+	if err != nil {
+		switch {
+		case errors.Is(err, chcore.ErrHistoryItemsEmpty), errors.Is(err, chcore.ErrHistoryItemFieldsRequired):
+			writeError(c, http.StatusBadRequest, err.Error())
+		default:
+			writeError(c, http.StatusInternalServerError, "insert history failed")
+		}
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"uploaded": len(req.Items)})
+	c.JSON(http.StatusCreated, gin.H{"uploaded": uploaded})
 }
 
 func (h *CHHandler) ListHistory(c *gin.Context) {
@@ -288,29 +247,10 @@ func (h *CHHandler) ListHistory(c *gin.Context) {
 	}
 
 	limit := parseLimit(c.Query("limit"), 50, 1, 200)
-	rows, err := h.pool.Query(c.Request.Context(), `
-		SELECT id, anime_id, anime_name, cover,
-		       COALESCE(client_added_at::text, '') AS client_added_at,
-		       created_at::text
-		FROM anime_history_records
-		WHERE user_id = $1
-		ORDER BY created_at DESC
-		LIMIT $2
-	`, userID, limit)
+	items, err := h.userService.ListHistory(c.Request.Context(), userID, limit)
 	if err != nil {
 		writeError(c, http.StatusInternalServerError, "query history failed")
 		return
-	}
-	defer rows.Close()
-
-	items := make([]historyQueryItem, 0, limit)
-	for rows.Next() {
-		var item historyQueryItem
-		if err := rows.Scan(&item.ID, &item.AnimeID, &item.Name, &item.Cover, &item.AddedAt, &item.CreatedAt); err != nil {
-			writeError(c, http.StatusInternalServerError, "scan history failed")
-			return
-		}
-		items = append(items, item)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -329,26 +269,19 @@ func (h *CHHandler) CreateRank(c *gin.Context) {
 		return
 	}
 
-	req.Title = strings.TrimSpace(req.Title)
-	req.TierBoardName = strings.TrimSpace(req.TierBoardName)
-	req.GridBoardName = strings.TrimSpace(req.GridBoardName)
-	if req.Title == "" || req.TierBoardName == "" || req.GridBoardName == "" {
-		writeError(c, http.StatusBadRequest, "title, tier_board_name, grid_board_name are required")
-		return
-	}
-	if len(req.Payload) == 0 {
-		writeError(c, http.StatusBadRequest, "payload is required")
-		return
-	}
-
-	var id int64
-	err := h.pool.QueryRow(c.Request.Context(), `
-		INSERT INTO rank_snapshots (user_id, title, tier_board_name, grid_board_name, payload)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING id
-	`, userID, req.Title, req.TierBoardName, req.GridBoardName, req.Payload).Scan(&id)
+	id, err := h.rankService.CreateRank(c.Request.Context(), userID, chcore.RankInput{
+		Title:         req.Title,
+		TierBoardName: req.TierBoardName,
+		GridBoardName: req.GridBoardName,
+		Payload:       req.Payload,
+	})
 	if err != nil {
-		writeError(c, http.StatusInternalServerError, "insert rank failed")
+		switch {
+		case errors.Is(err, chcore.ErrRankFieldsRequired), errors.Is(err, chcore.ErrPayloadRequired):
+			writeError(c, http.StatusBadRequest, err.Error())
+		default:
+			writeError(c, http.StatusInternalServerError, "insert rank failed")
+		}
 		return
 	}
 
@@ -363,36 +296,10 @@ func (h *CHHandler) ListRank(c *gin.Context) {
 	}
 
 	limit := parseLimit(c.Query("limit"), 20, 1, 100)
-	rows, err := h.pool.Query(c.Request.Context(), `
-		SELECT id, title, tier_board_name, grid_board_name, payload, created_at::text
-		FROM rank_snapshots
-		WHERE user_id = $1
-		ORDER BY created_at DESC
-		LIMIT $2
-	`, userID, limit)
+	items, err := h.rankService.ListRank(c.Request.Context(), userID, limit)
 	if err != nil {
 		writeError(c, http.StatusInternalServerError, "query rank failed")
 		return
-	}
-	defer rows.Close()
-
-	type rankItem struct {
-		ID            int64           `json:"id"`
-		Title         string          `json:"title"`
-		TierBoardName string          `json:"tier_board_name"`
-		GridBoardName string          `json:"grid_board_name"`
-		Payload       json.RawMessage `json:"payload"`
-		CreatedAt     string          `json:"created_at"`
-	}
-
-	items := make([]rankItem, 0, limit)
-	for rows.Next() {
-		var item rankItem
-		if err := rows.Scan(&item.ID, &item.Title, &item.TierBoardName, &item.GridBoardName, &item.Payload, &item.CreatedAt); err != nil {
-			writeError(c, http.StatusInternalServerError, "scan rank failed")
-			return
-		}
-		items = append(items, item)
 	}
 
 	c.JSON(http.StatusOK, gin.H{"items": items})
@@ -405,35 +312,18 @@ func (h *CHHandler) LatestRank(c *gin.Context) {
 		return
 	}
 
-	var id int64
-	var title, tierBoardName, gridBoardName string
-	var payload json.RawMessage
-	var createdAt string
-	err := h.pool.QueryRow(c.Request.Context(), `
-		SELECT id, title, tier_board_name, grid_board_name, payload, created_at::text
-		FROM rank_snapshots
-		WHERE user_id = $1
-		ORDER BY created_at DESC
-		LIMIT 1
-	`, userID).Scan(&id, &title, &tierBoardName, &gridBoardName, &payload, &createdAt)
+	item, err := h.rankService.LatestRank(c.Request.Context(), userID)
 	if err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			c.JSON(http.StatusOK, gin.H{"item": nil})
-			return
-		}
 		writeError(c, http.StatusInternalServerError, "query latest rank failed")
+		return
+	}
+	if item == nil {
+		c.JSON(http.StatusOK, gin.H{"item": nil})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"item": gin.H{
-			"id":              id,
-			"title":           title,
-			"tier_board_name": tierBoardName,
-			"grid_board_name": gridBoardName,
-			"payload":         payload,
-			"created_at":      createdAt,
-		},
+		"item": item,
 	})
 }
 
@@ -452,95 +342,57 @@ func (h *CHHandler) Sync(c *gin.Context) {
 		writeError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	if len(req.History) == 0 && req.Rank == nil {
-		writeError(c, http.StatusBadRequest, "history or rank is required")
-		return
-	}
-
-	tx, err := h.pool.Begin(c.Request.Context())
-	if err != nil {
-		writeError(c, http.StatusInternalServerError, "begin tx failed")
-		return
-	}
-	defer tx.Rollback(c.Request.Context())
-
-	historyCount := 0
+	historyItems := make([]chcore.HistoryUploadItem, 0, len(req.History))
 	for _, item := range req.History {
-		if item.AnimeID == 0 || strings.TrimSpace(item.Name) == "" || strings.TrimSpace(item.Cover) == "" {
-			writeError(c, http.StatusBadRequest, "history item fields are required")
-			return
-		}
-		clientAddedAt := parseRFC3339Nullable(item.AddedAt)
-		_, err := tx.Exec(c.Request.Context(), `
-			INSERT INTO anime_history_records (user_id, anime_id, anime_name, cover, client_added_at)
-			VALUES ($1, $2, $3, $4, $5)
-		`, userID, item.AnimeID, item.Name, item.Cover, clientAddedAt)
-		if err != nil {
-			writeError(c, http.StatusInternalServerError, "insert history failed")
-			return
-		}
-		historyCount++
+		historyItems = append(historyItems, chcore.HistoryUploadItem{
+			AnimeID: item.AnimeID,
+			Name:    item.Name,
+			Cover:   item.Cover,
+			AddedAt: item.AddedAt,
+		})
 	}
 
-	var rankID *int64
+	var rankInput *chcore.RankInput
 	if req.Rank != nil {
-		req.Rank.Title = strings.TrimSpace(req.Rank.Title)
-		req.Rank.TierBoardName = strings.TrimSpace(req.Rank.TierBoardName)
-		req.Rank.GridBoardName = strings.TrimSpace(req.Rank.GridBoardName)
-		if req.Rank.Title == "" || req.Rank.TierBoardName == "" || req.Rank.GridBoardName == "" || len(req.Rank.Payload) == 0 {
-			writeError(c, http.StatusBadRequest, "invalid rank payload")
-			return
+		rankInput = &chcore.RankInput{
+			Title:         req.Rank.Title,
+			TierBoardName: req.Rank.TierBoardName,
+			GridBoardName: req.Rank.GridBoardName,
+			Payload:       req.Rank.Payload,
 		}
-
-		var id int64
-		err := tx.QueryRow(c.Request.Context(), `
-			INSERT INTO rank_snapshots (user_id, title, tier_board_name, grid_board_name, payload)
-			VALUES ($1, $2, $3, $4, $5)
-			RETURNING id
-		`, userID, req.Rank.Title, req.Rank.TierBoardName, req.Rank.GridBoardName, req.Rank.Payload).Scan(&id)
-		if err != nil {
-			writeError(c, http.StatusInternalServerError, "insert rank failed")
-			return
-		}
-		rankID = &id
 	}
 
-	if err := tx.Commit(c.Request.Context()); err != nil {
-		writeError(c, http.StatusInternalServerError, "commit tx failed")
+	result, err := h.rankService.Sync(c.Request.Context(), userID, chcore.SyncInput{
+		History: historyItems,
+		Rank:    rankInput,
+	})
+	if err != nil {
+		switch {
+		case errors.Is(err, chcore.ErrHistoryOrRank), errors.Is(err, chcore.ErrSyncHistoryItemFieldsRequired), errors.Is(err, chcore.ErrInvalidRankPayload):
+			writeError(c, http.StatusBadRequest, err.Error())
+		default:
+			writeError(c, http.StatusInternalServerError, "commit tx failed")
+		}
 		return
 	}
 
 	c.JSON(http.StatusCreated, gin.H{
-		"history_uploaded": historyCount,
-		"rank_id":          rankID,
+		"history_uploaded": result.HistoryUploaded,
+		"rank_id":          result.RankID,
 	})
 }
 
 func (h *CHHandler) AuthRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		token := parseBearerToken(c.GetHeader("Authorization"))
-		if token == "" {
-			writeError(c, http.StatusUnauthorized, "missing token")
-			c.Abort()
-			return
-		}
-
-		var userID int64
-		var expiresAt time.Time
-		err := h.pool.QueryRow(c.Request.Context(), `
-			SELECT user_id, expires_at
-			FROM user_sessions
-			WHERE token = $1
-		`, token).Scan(&userID, &expiresAt)
+		userID, err := h.userService.ValidateSession(c.Request.Context(), token)
 		if err != nil {
-			writeError(c, http.StatusUnauthorized, "invalid token")
-			c.Abort()
-			return
-		}
-
-		if time.Now().After(expiresAt) {
-			_, _ = h.pool.Exec(context.Background(), `DELETE FROM user_sessions WHERE token = $1`, token)
-			writeError(c, http.StatusUnauthorized, "token expired")
+			switch {
+			case errors.Is(err, chcore.ErrMissingToken), errors.Is(err, chcore.ErrInvalidToken), errors.Is(err, chcore.ErrTokenExpired):
+				writeError(c, http.StatusUnauthorized, err.Error())
+			default:
+				writeError(c, http.StatusUnauthorized, "invalid token")
+			}
 			c.Abort()
 			return
 		}
@@ -573,22 +425,4 @@ func (h *CHHandler) corsMiddleware() gin.HandlerFunc {
 
 		c.Next()
 	}
-}
-
-func (h *CHHandler) createSession(ctx context.Context, userID int64) (string, time.Time, error) {
-	token, err := randomHex(32)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-
-	expiresAt := time.Now().Add(time.Duration(h.cfg.SessionTTLHours) * time.Hour)
-	_, err = h.pool.Exec(ctx, `
-		INSERT INTO user_sessions (token, user_id, expires_at)
-		VALUES ($1, $2, $3)
-	`, token, userID, expiresAt)
-	if err != nil {
-		return "", time.Time{}, err
-	}
-
-	return token, expiresAt, nil
 }

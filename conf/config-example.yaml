@@ -19,7 +19,6 @@ P5cc:
   logoOffset: 240 # Logo偏移量
   showWtm: "" # 水印文字，为空则不显示
 
-# Path: wxapi/config/app.yaml
 WxApi:
   replyPostURL: "http://your_domain_here/wx/reply" # 请修改为你的域名地址/wx/reply
   official_account:
