@@ -10,11 +10,9 @@ ENV GO111MODULE=on \
 
 WORKDIR /app
 
-COPY go.mod go.sum* ./
-RUN go mod download
-
-# 复制项目源码
 COPY . .
+
+RUN go mod download
 
 RUN go build -o webapi main.go
 
