@@ -130,19 +130,53 @@ func (s *RankService) Sync(ctx context.Context, userID int64, input SyncInput) (
 	}
 	defer tx.Rollback(ctx)
 
+	unique, err := dedupeHistoryItems(input.History, ErrSyncHistoryItemFieldsRequired)
+	if err != nil {
+		return nil, err
+	}
+
 	historyCount := 0
-	for _, item := range input.History {
-		if item.AnimeID == 0 || strings.TrimSpace(item.Name) == "" || strings.TrimSpace(item.Cover) == "" {
-			return nil, ErrSyncHistoryItemFieldsRequired
-		}
+	activeIDs := make([]int64, 0, len(unique))
+	for _, item := range unique {
 		_, err = tx.Exec(ctx, `
-			INSERT INTO anime_history_records (user_id, anime_id, anime_name, cover, client_added_at)
-			VALUES ($1, $2, $3, $4, $5)
+			INSERT INTO anime_history_records (user_id, anime_id, anime_name, cover, client_added_at, is_deleted, updated_at)
+			VALUES ($1, $2, $3, $4, $5, FALSE, NOW())
+			ON CONFLICT (user_id, anime_id) DO UPDATE
+			SET anime_name = EXCLUDED.anime_name,
+			    cover = EXCLUDED.cover,
+			    client_added_at = EXCLUDED.client_added_at,
+			    is_deleted = FALSE,
+			    updated_at = NOW()
 		`, userID, item.AnimeID, item.Name, item.Cover, parseRFC3339Nullable(item.AddedAt))
 		if err != nil {
 			return nil, err
 		}
+		activeIDs = append(activeIDs, item.AnimeID)
 		historyCount++
+	}
+
+	if len(activeIDs) == 0 {
+		_, err = tx.Exec(ctx, `
+			UPDATE anime_history_records
+			SET is_deleted = TRUE,
+			    updated_at = NOW()
+			WHERE user_id = $1 AND is_deleted = FALSE
+		`, userID)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, err = tx.Exec(ctx, `
+			UPDATE anime_history_records
+			SET is_deleted = TRUE,
+			    updated_at = NOW()
+			WHERE user_id = $1
+			  AND is_deleted = FALSE
+			  AND NOT (anime_id = ANY($2::BIGINT[]))
+		`, userID, activeIDs)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	var rankID *int64

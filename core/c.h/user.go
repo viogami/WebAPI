@@ -14,17 +14,14 @@ import (
 )
 
 var (
-	ErrInvalidUsernameLength         = errors.New("username length must be 3-32")
-	ErrPasswordTooShort              = errors.New("password is too short")
-	ErrUsernameAndPasswordRequired   = errors.New("username and password are required")
-	ErrUsernameExists                = errors.New("username already exists")
-	ErrInvalidUsernameOrPassword     = errors.New("invalid username or password")
-	ErrHistoryItemsEmpty             = errors.New("items cannot be empty")
-	ErrHistoryItemFieldsRequired     = errors.New("anime_id, name, cover are required")
-	ErrSyncHistoryItemFieldsRequired = errors.New("history item fields are required")
-	ErrMissingToken                  = errors.New("missing token")
-	ErrInvalidToken                  = errors.New("invalid token")
-	ErrTokenExpired                  = errors.New("token expired")
+	ErrInvalidUsernameLength       = errors.New("username length must be 3-32")
+	ErrPasswordTooShort            = errors.New("password is too short")
+	ErrUsernameAndPasswordRequired = errors.New("username and password are required")
+	ErrUsernameExists              = errors.New("username already exists")
+	ErrInvalidUsernameOrPassword   = errors.New("invalid username or password")
+	ErrMissingToken                = errors.New("missing token")
+	ErrInvalidToken                = errors.New("invalid token")
+	ErrTokenExpired                = errors.New("token expired")
 )
 
 type UserService struct {
@@ -43,22 +40,6 @@ type AuthResult struct {
 type MeResult struct {
 	UserID   int64
 	Username string
-}
-
-type HistoryUploadItem struct {
-	AnimeID int64
-	Name    string
-	Cover   string
-	AddedAt string
-}
-
-type HistoryQueryItem struct {
-	ID        int64  `json:"id"`
-	AnimeID   int64  `json:"anime_id"`
-	Name      string `json:"name"`
-	Cover     string `json:"cover"`
-	AddedAt   string `json:"added_at"`
-	CreatedAt string `json:"created_at"`
 }
 
 func NewUserService(pool *pgxpool.Pool, passwordPepper string, sessionTTLHours int) *UserService {
@@ -155,64 +136,6 @@ func (s *UserService) Me(ctx context.Context, userID int64) (*MeResult, error) {
 	}
 
 	return &MeResult{UserID: userID, Username: username}, nil
-}
-
-func (s *UserService) UploadHistory(ctx context.Context, userID int64, items []HistoryUploadItem) (int, error) {
-	if len(items) == 0 {
-		return 0, ErrHistoryItemsEmpty
-	}
-
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return 0, err
-	}
-	defer tx.Rollback(ctx)
-
-	for _, item := range items {
-		if item.AnimeID == 0 || strings.TrimSpace(item.Name) == "" || strings.TrimSpace(item.Cover) == "" {
-			return 0, ErrHistoryItemFieldsRequired
-		}
-		_, err = tx.Exec(ctx, `
-			INSERT INTO anime_history_records (user_id, anime_id, anime_name, cover, client_added_at)
-			VALUES ($1, $2, $3, $4, $5)
-		`, userID, item.AnimeID, item.Name, item.Cover, parseRFC3339Nullable(item.AddedAt))
-		if err != nil {
-			return 0, err
-		}
-	}
-
-	if err := tx.Commit(ctx); err != nil {
-		return 0, err
-	}
-
-	return len(items), nil
-}
-
-func (s *UserService) ListHistory(ctx context.Context, userID int64, limit int) ([]HistoryQueryItem, error) {
-	rows, err := s.pool.Query(ctx, `
-		SELECT id, anime_id, anime_name, cover,
-		       COALESCE(client_added_at::text, '') AS client_added_at,
-		       created_at::text
-		FROM anime_history_records
-		WHERE user_id = $1
-		ORDER BY created_at DESC
-		LIMIT $2
-	`, userID, limit)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-
-	items := make([]HistoryQueryItem, 0, limit)
-	for rows.Next() {
-		var item HistoryQueryItem
-		if err := rows.Scan(&item.ID, &item.AnimeID, &item.Name, &item.Cover, &item.AddedAt, &item.CreatedAt); err != nil {
-			return nil, err
-		}
-		items = append(items, item)
-	}
-
-	return items, nil
 }
 
 func (s *UserService) ValidateSession(ctx context.Context, token string) (int64, error) {
