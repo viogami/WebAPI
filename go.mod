@@ -3,10 +3,10 @@ module webapi
 go 1.26.0
 
 require (
+	auto-memories-doll/ch v0.0.0
 	github.com/dgraph-io/ristretto v0.2.0
 	github.com/fogleman/gg v1.3.0
 	github.com/gin-gonic/gin v1.10.0
-	github.com/jackc/pgx/v5 v5.7.5
 	github.com/sashabaranov/go-openai v1.40.1
 	github.com/silenceper/wechat/v2 v2.1.8
 	gopkg.in/yaml.v3 v3.0.1
@@ -32,6 +32,7 @@ require (
 	github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20240606120523-5a60cdf6a761 // indirect
+	github.com/jackc/pgx/v5 v5.7.6 // indirect
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
@@ -59,3 +60,5 @@ require (
 	golang.org/x/text v0.24.0 // indirect
 	google.golang.org/protobuf v1.34.1 // indirect
 )
+
+replace auto-memories-doll/ch => ./core/C.H
