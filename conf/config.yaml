@@ -1,0 +1,24 @@
+server:
+  host: ""
+  port: 8080
+  ginMode: release
+
+text:
+  helloText: "WebAPI is running"
+
+p5cc:
+  assetPath: "core/p5cc/assets/"
+  fontSize: 120
+  fontFamily: "core/p5cc/assets/HarmonyOSSansSC-Bold.TTF"
+  gutter: 10
+  padding: 240
+  textAlign: center
+  redProb: 0.33
+  showLogo: true
+  logoScale: 1.0
+  logoOffset: 240
+  showWtm: ""
+
+ch:
+  enabled: false
+  sessionTTLHours: 168

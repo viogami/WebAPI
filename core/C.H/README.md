@@ -1,41 +1,10 @@
-# C.H backend (Go + PostgreSQL)
+# C.H backend
 
-auto-memories-doll最小可用后端，名称来源于C.H邮局，用于上传数据并云端保存：
+C.H 是根 WebAPI 服务可选挂载的 PostgreSQL 数据接口，用于 auto-memories-doll 的用户、历史记录、榜单和同步数据。它作为根项目的本地 Go 模块使用，不再提供单独的 Docker Compose 部署入口。
 
-- 用户注册/登录（最简单校验）
-- 动漫收藏历史记录上传与查询
-- Rank 快照上传与查询
-- 批量同步接口
+启用方式：在根目录 `conf/config.yaml` 中设置 `ch.enabled: true`，并在部署环境中设置 `CH_API_DATABASE_URL`、`CH_API_PASSWORD_PEPPER` 与可选的 `CH_API_ALLOWED_ORIGIN`。迁移脚本位于 `migrations/001_init.sql`，应由受管 PostgreSQL 或部署流程执行。
 
-## 1. 启动 PostgreSQL
-
-使用docker，pull 最新pg镜像，这里直接启动：
-
-```bash
-cd C.H
-docker compose up -d
-```
-
-> 首次启动会自动执行 `migrations/001_init.sql` 建表。
-
-## 2. 配置环境变量
-
-```bash
-cp .env.example .env
-```
-
-默认值即可本地开发。
-
-## 3. 启动后端
-
-```bash
-go mod tidy
-go run main.go
-```
-
-默认监听：`http://localhost:8088`
-
-## 4. API 概览
+## API 概览
 
 ### 认证
 

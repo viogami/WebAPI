@@ -3,5 +3,4 @@ main.exe
 .vscode
 .idea
 
-conf/config.yaml
 .env

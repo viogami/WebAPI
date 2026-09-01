@@ -1,12 +1,10 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
-	"strings"
-	"webapi/conf"
 
 	chsdk "auto-memories-doll/ch/sdk"
+	"webapi/conf"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,17 +14,12 @@ type CHHandler struct {
 	closeFn func()
 }
 
-func NewCHHandler(cfg conf.CHApiConfig) (*CHHandler, error) {
+func NewCHHandler(cfg conf.CHAPIConfig) (*CHHandler, error) {
 	if !cfg.Enabled {
 		return nil, nil
 	}
 
-	if strings.TrimSpace(cfg.DatabaseURL) == "" {
-		log.Println("CHApi enabled but databaseURL is empty, skip route registration")
-		return nil, nil
-	}
-
-	h, closeFn, err := chsdk.NewHTTPHandler(chsdk.Config{
+	handler, closeFn, err := chsdk.NewHTTPHandler(chsdk.Config{
 		DatabaseURL:     cfg.DatabaseURL,
 		SessionTTLHours: cfg.SessionTTLHours,
 		PasswordPepper:  cfg.PasswordPepper,
@@ -36,22 +29,17 @@ func NewCHHandler(cfg conf.CHApiConfig) (*CHHandler, error) {
 		return nil, err
 	}
 
-	return &CHHandler{handler: h, closeFn: closeFn}, nil
+	return &CHHandler{handler: handler, closeFn: closeFn}, nil
 }
 
 func (h *CHHandler) RegisterRoutes(r *gin.Engine) {
-	if h == nil || h.handler == nil {
-		return
-	}
-
 	wrapped := gin.WrapH(http.StripPrefix("/CH", h.handler))
 	r.Any("/CH", wrapped)
 	r.Any("/CH/*any", wrapped)
 }
 
 func (h *CHHandler) Close() {
-	if h == nil || h.closeFn == nil {
-		return
+	if h != nil && h.closeFn != nil {
+		h.closeFn()
 	}
-	h.closeFn()
 }

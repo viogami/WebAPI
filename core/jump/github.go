@@ -5,11 +5,11 @@ import (
 	"strings"
 )
 
-// GitHub 允许代理的 Host 白名单（强烈建议）
+// GitHub 允许代理的 Host 白名单
 var githubAllowHosts = map[string]bool{
-	"github.com":                     true,
-	"raw.githubusercontent.com":      true,
-	"github-readme-stats.vercel.app": true,
+	"github.com":                       true,
+	"raw.githubusercontent.com":        true,
+	"github-stats-extended.vercel.app": true,
 }
 
 // /jump/github/{host}/{path...} github 代理路径解析
@@ -21,7 +21,7 @@ func BuildGithubURL(proxyPath, rawQuery string) (string, error) {
 
 	host := parts[0]
 	path := parts[1]
-	
+
 	if !githubAllowHosts[host] {
 		return "", errors.New("host not allowed")
 	}

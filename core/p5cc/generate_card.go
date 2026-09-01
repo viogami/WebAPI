@@ -6,12 +6,12 @@ import (
 	"image/color"
 	"os"
 	"strings"
-	"webapi/conf"
 
 	"github.com/fogleman/gg"
 )
 
 type P5ccConfig struct {
+	AssetPath  string
 	FontSize   float64
 	FontFamily string
 	Gutter     float64
@@ -51,7 +51,7 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 	// 创建画布
 	dc := gg.NewContext(canvasWidth, canvasHeight)
 	// 加载画布
-	canvas, err := loadImage(conf.AppConfig.P5cc.AssetPath + "canvas.png")
+	canvas, err := loadImage(option.AssetPath + "canvas.png")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load canvas image: %v", err)
 	}
@@ -60,7 +60,7 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 	dc.DrawImage(canvas, canvasX, canvasY)
 
 	// 加载背景图像
-	baseCard, err := loadImage(conf.AppConfig.P5cc.AssetPath + "base.png")
+	baseCard, err := loadImage(option.AssetPath + "base.png")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load base image: %v", err)
 	}
@@ -70,7 +70,7 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 
 	// 加载并绘制 Logo
 	if option.ShowLogo {
-		logo, err := loadImage(conf.AppConfig.P5cc.AssetPath + "logo.png")
+		logo, err := loadImage(option.AssetPath + "logo.png")
 		if err != nil {
 			return nil, fmt.Errorf("failed to load logo image: %v", err)
 		}
@@ -87,20 +87,12 @@ func GenerateCard(text string, option P5ccConfig) (image.Image, error) {
 	}
 
 	// 绘制用户文本
-	options := map[string]interface{}{
-		"fontSize":   option.FontSize,
-		"fontFamily": option.FontFamily,
-		"gutter":     option.Gutter,
-		"padding":    option.Padding,
-		"textAlign":  option.TextAlign,
-		"redProb":    option.RedProb,
-	}
 	// 根据\n分割文本
 	var res []string
 	res = append(res, strings.Split(text, "\\n")...)
 
 	for i, line := range res {
-		boxText := NewBoxText(line, options)
+		boxText := NewBoxText(line, option)
 		boxText.Draw(dc, len(res)/2-i) // 传入最大行数/2减行数，draw函数中修改y的值，自动上移实现垂直居中。
 	}
 

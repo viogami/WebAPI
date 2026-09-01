@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+	"strings"
 )
 
 type Config struct {
@@ -17,9 +18,9 @@ type Config struct {
 func Load() (Config, error) {
 	cfg := Config{
 		Port:           getOrDefault("PORT", "8088"),
-		DatabaseURL:    os.Getenv("AMD_DATABASE_URL"),
-		PasswordPepper: getOrDefault("PASSWORD_PEPPER", "dev-pepper"),
-		AllowedOrigin:  getOrDefault("ALLOWED_ORIGIN", "http://localhost:3000"),
+		DatabaseURL:    getFirstEnv("CH_API_DATABASE_URL", "AMD_DATABASE_URL"),
+		PasswordPepper: getFirstEnv("CH_API_PASSWORD_PEPPER", "PASSWORD_PEPPER"),
+		AllowedOrigin:  getFirstEnvOrDefault("http://localhost:3000", "CH_API_ALLOWED_ORIGIN", "ALLOWED_ORIGIN"),
 	}
 
 	ttlRaw := getOrDefault("SESSION_TTL_HOURS", "168")
@@ -30,16 +31,34 @@ func Load() (Config, error) {
 	cfg.SessionTTLHours = ttl
 
 	if cfg.DatabaseURL == "" {
-		return Config{}, fmt.Errorf("AMD_DATABASE_URL is required")
+		return Config{}, fmt.Errorf("CH_API_DATABASE_URL is required")
+	}
+	if cfg.PasswordPepper == "" {
+		return Config{}, fmt.Errorf("CH_API_PASSWORD_PEPPER is required")
 	}
 
 	return cfg, nil
 }
 
 func getOrDefault(key, fallback string) string {
-	value := os.Getenv(key)
-	if value == "" {
-		return fallback
+	if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+		return value
 	}
-	return value
+	return fallback
+}
+
+func getFirstEnv(keys ...string) string {
+	for _, key := range keys {
+		if value := strings.TrimSpace(os.Getenv(key)); value != "" {
+			return value
+		}
+	}
+	return ""
+}
+
+func getFirstEnvOrDefault(fallback string, keys ...string) string {
+	if value := getFirstEnv(keys...); value != "" {
+		return value
+	}
+	return fallback
 }

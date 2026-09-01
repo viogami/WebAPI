@@ -2,81 +2,64 @@ package openai
 
 import (
 	"context"
-	"log/slog"
-	"os"
-	"sync"
-	"webapi/conf"
+	"errors"
+	"net/http"
+	"strings"
+	"time"
 
 	goOpenai "github.com/sashabaranov/go-openai"
 )
 
-var (
-	instance *ChatGPTService
-	once     sync.Once
-)
-
-func GetInstance() *ChatGPTService {
-	once.Do(func() {
-		instance = NewChatGPTService()
-	})
-	return instance
-}
+var ErrNotConfigured = errors.New("OpenAI API key is not configured")
 
 type ChatGPTService struct {
-	Role             string
-	Character        string
 	characterSetting string
-
-	client *goOpenai.Client
+	client           *goOpenai.Client
+	apiKey           string
 }
 
-func NewChatGPTService() *ChatGPTService {
-	URL_PROXY := conf.AppConfig.AIConfig.ChatGPTUrlProxy
-	APIKey := os.Getenv("ChatGPTAPIKey")
+func NewChatGPTService(baseURL, apiKey string) *ChatGPTService {
+	baseURL = strings.TrimRight(strings.TrimSpace(baseURL), "/")
+	apiKey = strings.TrimSpace(apiKey)
+	if baseURL == "" {
+		return &ChatGPTService{apiKey: apiKey}
+	}
 
-	s := new(ChatGPTService)
-	s.Role = goOpenai.ChatMessageRoleUser
-	s.Character = "vio"
-	s.characterSetting = gpt_preset[s.Character]
+	config := goOpenai.DefaultConfig(apiKey)
+	config.BaseURL = baseURL
+	config.HTTPClient = &http.Client{Timeout: 30 * time.Second}
 
-	conf := goOpenai.DefaultConfig(APIKey)
-	conf.BaseURL = URL_PROXY
-
-	s.client = goOpenai.NewClientWithConfig(conf)
-
-	return s
+	return &ChatGPTService{
+		characterSetting: gpt_preset["vio"],
+		client:           goOpenai.NewClientWithConfig(config),
+		apiKey:           apiKey,
+	}
 }
 
-func (s *ChatGPTService) SetCharacter(character string) {
-	s.Character = character
-	s.characterSetting = gpt_preset[character]
-}
+func (s *ChatGPTService) InvokeChatGPTAPI(ctx context.Context, text string) (string, error) {
+	if s.apiKey == "" || s.client == nil {
+		return "", ErrNotConfigured
+	}
 
-func (s *ChatGPTService) InvokeChatGPTAPI(text string) string {
-	return s.InvokeChatGPTAPIWithRole(text, s.Role)
-}
-
-func (s *ChatGPTService) InvokeChatGPTAPIWithRole(text string, role string) string {
-	resp, err := s.client.CreateChatCompletion(
-		context.Background(),
-		goOpenai.ChatCompletionRequest{
-			Model: goOpenai.GPT4o20241120,
-			Messages: []goOpenai.ChatCompletionMessage{
-				{
-					Role:    goOpenai.ChatMessageRoleSystem,
-					Content: s.characterSetting,
-				},
-				{
-					Role:    role,
-					Content: text,
-				},
+	resp, err := s.client.CreateChatCompletion(ctx, goOpenai.ChatCompletionRequest{
+		Model: goOpenai.GPT4o20241120,
+		Messages: []goOpenai.ChatCompletionMessage{
+			{
+				Role:    goOpenai.ChatMessageRoleSystem,
+				Content: s.characterSetting,
+			},
+			{
+				Role:    goOpenai.ChatMessageRoleUser,
+				Content: text,
 			},
 		},
-	)
+	})
 	if err != nil {
-		slog.Error("Error calling ChatGPT API", "error", err)
-		Resp := "AI调用失败了😥 error:\n" + err.Error()
-		return Resp
+		return "", err
 	}
-	return resp.Choices[0].Message.Content
+	if len(resp.Choices) == 0 || resp.Choices[0].Message.Content == "" {
+		return "", errors.New("OpenAI returned no message content")
+	}
+
+	return resp.Choices[0].Message.Content, nil
 }

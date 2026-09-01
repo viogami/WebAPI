@@ -101,24 +101,14 @@ func (bc *BoxChar) OutterSize() (float64, float64) {
 	return w * scale, h * scale
 }
 
-func NewBoxText(text string, options map[string]interface{}) *BoxText {
-	bt := new(BoxText)
-	// 应用配置
-	for k, v := range options {
-		switch k {
-		case "fontSize":
-			bt.FontSize = v.(float64)
-		case "fontFamily":
-			bt.FontFamily = v.(string)
-		case "gutter":
-			bt.Gutter = v.(float64)
-		case "padding":
-			bt.Padding = v.(float64)
-		case "textAlign":
-			bt.TextAlign = v.(string)
-		case "redProb":
-			bt.RedProb = v.(float64)
-		}
+func NewBoxText(text string, options P5ccConfig) *BoxText {
+	bt := &BoxText{
+		FontSize:   options.FontSize,
+		FontFamily: options.FontFamily,
+		Gutter:     options.Gutter,
+		Padding:    options.Padding,
+		TextAlign:  options.TextAlign,
+		RedProb:    options.RedProb,
 	}
 
 	// 初始化字符模式

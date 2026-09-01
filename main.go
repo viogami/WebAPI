@@ -1,21 +1,36 @@
 package main
 
 import (
+	"context"
+	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
+
 	"webapi/conf"
 	"webapi/server"
-	"log"
 )
 
 func main() {
-	if err := conf.InitConfig(); err != nil {
-		log.Fatalf("Config error: %v", err)
+	cfg, err := conf.Load()
+	if err != nil {
+		slog.Error("load configuration", "error", err)
+		os.Exit(1)
 	}
 
-	s := server.NewServer(conf.AppConfig)
+	s, err := server.NewServer(cfg)
+	if err != nil {
+		slog.Error("create server", "error", err)
+		os.Exit(1)
+	}
 
-	s.UseMiddleware()
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	s.RegisterRoutes()
 
-	s.Run()
+	if err := s.Run(ctx); err != nil {
+		slog.Error("run server", "error", err)
+		os.Exit(1)
+	}
 }

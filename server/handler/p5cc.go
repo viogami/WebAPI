@@ -10,16 +10,18 @@ import (
 )
 
 type P5ccHandler struct {
+	cfg conf.P5ccConfig
 }
 
-func NewP5ccHandler() *P5ccHandler {
-	return &P5ccHandler{}
+func NewP5ccHandler(cfg conf.P5ccConfig) *P5ccHandler {
+	return &P5ccHandler{cfg: cfg}
 }
 
 // p5cc Get请求
 func (p *P5ccHandler) GET(c *gin.Context) {
-	cfg := conf.AppConfig.P5cc
+	cfg := p.cfg
 	option := p5cc.P5ccConfig{
+		AssetPath:  cfg.AssetPath,
 		FontSize:   cfg.FontSize,
 		FontFamily: cfg.FontFamily,
 		Gutter:     cfg.Gutter,
@@ -53,10 +55,11 @@ func (p *P5ccHandler) GET(c *gin.Context) {
 // p5cc Post请求
 func (p *P5ccHandler) POST(c *gin.Context) {
 	// 在路由处理函数中使用
-	defaultCfg := conf.AppConfig.P5cc
+	defaultCfg := p.cfg
 	text := c.PostForm("text")
 
 	option := p5cc.P5ccConfig{
+		AssetPath:  defaultCfg.AssetPath,
 		FontSize:   getFloatParam(c, "fontSize", defaultCfg.FontSize),
 		FontFamily: defaultCfg.FontFamily, // 不支持修改字体
 		Gutter:     getFloatParam(c, "gutter", defaultCfg.Gutter),

@@ -1,57 +1,27 @@
 package server
 
-import (
-	"log"
-	"webapi/middleware"
-	h "webapi/server/handler"
+import h "webapi/server/handler"
 
-	"github.com/gin-gonic/gin"
-)
-
-func (s *Server) RegisterRoutes() *gin.Engine {
+func (s *Server) RegisterRoutes() {
 	r := s.router
 
-	// 创建handler
-	h1 := h.NewHandler()
-	h2 := h.NewP5ccHandler()
-	h3 := h.NewWxapiHandler()
-	h4 := h.NewAIHandler()
-	h5 := h.NewJumpHandler()
-	h6, err := h.NewCHHandler(s.cfg.CHApi)
-	if err != nil {
-		log.Printf("init CHApi handler failed: %v", err)
+	baseHandler := h.NewHandler(s.cfg.Text.HelloText)
+	p5ccHandler := h.NewP5ccHandler(s.cfg.P5cc)
+	aiHandler := h.NewAIHandler(s.cfg.AI)
+	jumpHandler := h.NewJumpHandler()
+
+	r.GET("/", baseHandler.HelloHandler)
+	r.GET("/healthz", baseHandler.HealthHandler)
+
+	r.GET("/p5cc/:text", p5ccHandler.GET)
+	r.POST("/p5cc", p5ccHandler.POST)
+
+	r.POST("/gpt", aiHandler.ProcessMessage)
+	r.POST("/deepseek", aiHandler.ProcessSharpReviews)
+
+	r.GET("/jump/github/*proxyPath", jumpHandler.GithubProxy)
+
+	if s.chHandler != nil {
+		s.chHandler.RegisterRoutes(r)
 	}
-
-	r.GET("/", h1.HelloHandler)
-
-	// p5cc
-	r.GET("/p5cc/:text", h2.GET)
-	r.POST("/p5cc", h2.POST)
-
-	// wxapi
-	r.GET("/wxapi", h3.Hello)
-	r.GET("/wxapi/v1", h3.Redirect)
-	r.GET("/wxapi/v1/oa", h3.WXCheckSignature)
-	r.POST("/wxapi/v1/oa", h3.WXMsgReceive)
-	r.GET("/wxapi/v1/oa/menu", h3.CheckMenu)
-	//获取token
-	r.GET("/wxapi/v1/oa/basic/get-access-token", h3.GetAccessToken)
-	//获取微信callback IP
-	r.GET("/wxapi/v1/oa/basic/get-callback-ip", h3.GetCallbackIP)
-	//获取微信API接口 IP
-	r.GET("/wxapi/v1/oa/basic/get-api-domain-ip", h3.GetAPIDomainIP)
-	//清理接口调用次数
-	r.GET("/wxapi/v1/oa/basic/clear-quota", h3.ClearQuota)
-
-	// AI
-	r.POST("/gpt", h4.ProcessMessage)
-	r.POST("/deepseek", middleware.AuthMiddleware(), h4.ProcessSharpReviews) // deepseek请求需要鉴权
-
-	// Jump
-	r.GET("/jump/github/*proxyPath", h5.GithubProxy)
-
-	// C.H
-	h6.RegisterRoutes(r)
-
-	return r
 }
