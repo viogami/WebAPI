@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"time"
 	"webapi/conf"
+	"webapi/middleware"
 	h "webapi/server/handler"
 
 	"github.com/gin-gonic/gin"
@@ -22,6 +23,16 @@ type Server struct {
 func NewServer(cfg *conf.Config) (*Server, error) {
 	gin.SetMode(cfg.Server.GinMode)
 
+	router := gin.Default()
+	if err := router.SetTrustedProxies(cfg.Server.TrustedProxies); err != nil {
+		return nil, fmt.Errorf("configure trusted proxies: %w", err)
+	}
+	router.Use(middleware.NewRateLimiter(middleware.RateLimitConfig{
+		RequestsPerSecond: cfg.Server.RateLimit.RequestsPerSecond,
+		Burst:             cfg.Server.RateLimit.Burst,
+		IdleTTL:           time.Duration(cfg.Server.RateLimit.IdleTTLSeconds) * time.Second,
+	}).Middleware())
+
 	chHandler, err := h.NewCHHandler(cfg.CH)
 	if err != nil {
 		return nil, fmt.Errorf("initialize CH handler: %w", err)
@@ -29,7 +40,7 @@ func NewServer(cfg *conf.Config) (*Server, error) {
 
 	return &Server{
 		cfg:       cfg,
-		router:    gin.Default(),
+		router:    router,
 		chHandler: chHandler,
 	}, nil
 }

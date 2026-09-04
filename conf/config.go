@@ -5,6 +5,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -20,9 +21,17 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	Host    string `yaml:"host"`
-	Port    int    `yaml:"port"`
-	GinMode string `yaml:"ginMode"`
+	Host           string          `yaml:"host"`
+	Port           int             `yaml:"port"`
+	GinMode        string          `yaml:"ginMode"`
+	TrustedProxies []string        `yaml:"trustedProxies"`
+	RateLimit      RateLimitConfig `yaml:"rateLimit"`
+}
+
+type RateLimitConfig struct {
+	RequestsPerSecond float64 `yaml:"requestsPerSecond"`
+	Burst             int     `yaml:"burst"`
+	IdleTTLSeconds    int     `yaml:"idleTTLSeconds"`
 }
 
 type TextConfig struct {
@@ -73,6 +82,7 @@ func LoadFile(path string) (*Config, error) {
 		return nil, fmt.Errorf("parse config file: %w", err)
 	}
 
+	applyDefaults(&cfg)
 	if err := applyEnvironment(&cfg); err != nil {
 		return nil, err
 	}
@@ -81,6 +91,18 @@ func LoadFile(path string) (*Config, error) {
 	}
 
 	return &cfg, nil
+}
+
+func applyDefaults(cfg *Config) {
+	if cfg.Server.RateLimit.RequestsPerSecond == 0 {
+		cfg.Server.RateLimit.RequestsPerSecond = 5
+	}
+	if cfg.Server.RateLimit.Burst == 0 {
+		cfg.Server.RateLimit.Burst = 20
+	}
+	if cfg.Server.RateLimit.IdleTTLSeconds == 0 {
+		cfg.Server.RateLimit.IdleTTLSeconds = int((10 * time.Minute).Seconds())
+	}
 }
 
 func applyEnvironment(cfg *Config) error {
@@ -109,6 +131,15 @@ func validate(cfg Config) error {
 	}
 	if cfg.Server.GinMode == "" {
 		return fmt.Errorf("server ginMode is required")
+	}
+	if cfg.Server.RateLimit.RequestsPerSecond <= 0 {
+		return fmt.Errorf("server rateLimit requestsPerSecond must be positive")
+	}
+	if cfg.Server.RateLimit.Burst <= 0 {
+		return fmt.Errorf("server rateLimit burst must be positive")
+	}
+	if cfg.Server.RateLimit.IdleTTLSeconds <= 0 {
+		return fmt.Errorf("server rateLimit idleTTLSeconds must be positive")
 	}
 	if cfg.P5cc.AssetPath == "" || cfg.P5cc.FontFamily == "" {
 		return fmt.Errorf("p5cc assetPath and fontFamily are required")

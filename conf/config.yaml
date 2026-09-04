@@ -2,6 +2,12 @@ server:
   host: ""
   port: 8080
   ginMode: release
+  # 仅当反向代理的地址或网段在此列表中时，才信任 X-Forwarded-For。
+  trustedProxies: []
+  rateLimit:
+    requestsPerSecond: 5
+    burst: 20
+    idleTTLSeconds: 600
 
 text:
   helloText: "WebAPI is running"
